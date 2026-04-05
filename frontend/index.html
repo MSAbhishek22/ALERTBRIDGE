@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AlertBridge — India's Disaster Survival Platform</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@300;400;500;600;700&family=Oswald:wght@400;500;600;700&display=swap');
+:root{--void:#0A0D14;--base:#121620;--surface:#1A1F2D;--elevated:#242B3F;--raised:#303852;--danger:#FF3B30;--danger-glow:rgba(255,59,48,0.3);--amber:#FF9500;--amber-glow:rgba(255,149,0,0.25);--amber-dim:rgba(255,149,0,0.1);--safe:#34C759;--safe-glow:rgba(52,199,89,0.2);--info:#32ADE6;--text-1:#FFFFFF;--text-2:#D1D5DF;--text-3:#9BA3B5;--text-4:#646E82;--border-0:rgba(255,255,255,0.06);--border-1:rgba(255,255,255,0.12);--border-amber:rgba(255,149,0,0.3);--border-danger:rgba(255,59,48,0.3);--border-safe:rgba(52,199,89,0.3);--glass:rgba(18,22,32,0.85);--blur:blur(24px) saturate(160%);--font-d:'Bebas Neue',sans-serif;--font-u:'Barlow Condensed',sans-serif;--font-o:'Oswald',sans-serif;--r-sm:6px;--r-md:12px;--r-lg:20px;--r-xl:28px;--ease-b:cubic-bezier(0.34,1.56,0.64,1);--ease-s:cubic-bezier(0.4,0,0.2,1)}
+:root.light-mode{--void:#F0F4F8;--base:#FFFFFF;--surface:#F8FAFC;--elevated:#FFFFFF;--raised:#E2E8F0;--danger:#E53935;--danger-glow:rgba(229,57,53,0.15);--amber:#F57C00;--amber-glow:rgba(245,124,0,0.15);--amber-dim:rgba(245,124,0,0.08);--safe:#43A047;--safe-glow:rgba(67,160,71,0.15);--info:#039BE5;--text-1:#1E293B;--text-2:#334155;--text-3:#475569;--text-4:#64748B;--border-0:rgba(0,0,0,0.06);--border-1:rgba(0,0,0,0.12);--border-amber:rgba(245,124,0,0.35);--border-danger:rgba(229,57,53,0.35);--border-safe:rgba(67,160,71,0.35);--glass:rgba(255,255,255,0.85);--blur:blur(16px)}
+*{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}body{background:var(--void);color:var(--text-1);font-family:var(--font-u);overflow-x:hidden;cursor:none}
+#cursor-dot{position:fixed;z-index:99999;width:6px;height:6px;background:var(--amber);border-radius:50%;pointer-events:none;transform:translate(-50%,-50%);transition:transform .05s}
+#cursor-ring{position:fixed;z-index:99998;width:32px;height:32px;border:1.5px solid rgba(255,120,0,0.5);border-radius:50%;pointer-events:none;transform:translate(-50%,-50%);transition:transform .12s var(--ease-s),width .2s,height .2s,border-color .2s,background .2s}
+body.hovering #cursor-ring{width:48px;height:48px;border-color:var(--amber);background:rgba(255,120,0,0.05)}
+body.clicking #cursor-dot{transform:translate(-50%,-50%) scale(2.5);background:var(--danger)}
+body.clicking #cursor-ring{width:20px;height:20px;border-color:var(--danger)}
+.rain-c,.particle-c{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none}
+.rain-c{z-index:1}.particle-c{z-index:2}
+#fog-layer{position:fixed;top:0;left:0;width:100%;height:100%;z-index:3;pointer-events:none;background:radial-gradient(ellipse 100% 40% at 50% 100%,rgba(10,20,40,0.7) 0%,transparent 100%),radial-gradient(ellipse 60% 30% at 20% 80%,rgba(255,26,26,0.04) 0%,transparent 100%),radial-gradient(ellipse 60% 30% at 80% 70%,rgba(255,120,0,0.03) 0%,transparent 100%);animation:fog-b 8s ease-in-out infinite}
+@keyframes fog-b{0%,100%{opacity:.8;transform:scaleX(1)}50%{opacity:1;transform:scaleX(1.02)}}
+#grid-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:4;pointer-events:none;background-image:linear-gradient(rgba(255,120,0,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,120,0,0.03) 1px,transparent 1px);background-size:60px 60px;mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 0%,transparent 100%);-webkit-mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 0%,transparent 100%);animation:gp 4s ease-in-out infinite}
+@keyframes gp{0%,100%{opacity:.6}50%{opacity:1}}
+#scroll-progress{position:fixed;top:40px;left:0;height:3px;background:linear-gradient(90deg,var(--amber),var(--danger));z-index:1001;width:0%;transition:width .1s}
+#marquee-bar{position:fixed;top:0;width:100%;height:40px;z-index:1000;background:linear-gradient(135deg,#CC0000 0%,#FF1A1A 50%,#CC0000 100%);display:flex;align-items:center;overflow:hidden;border-bottom:1px solid rgba(255,255,255,0.15)}
+.marquee-live{flex-shrink:0;padding:0 20px;height:100%;display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.3);border-right:1px solid rgba(255,255,255,0.2);font:700 11px var(--font-o);letter-spacing:3px;color:#fff}
+.live-pulse{width:8px;height:8px;border-radius:50%;background:#fff;box-shadow:0 0 6px #fff;animation:lb .9s ease-in-out infinite}
+@keyframes lb{0%,100%{opacity:1;box-shadow:0 0 6px #fff}50%{opacity:.2;box-shadow:none}}
+.mq-wrap{flex:1;overflow:hidden;height:100%;display:flex;align-items:center;mask-image:linear-gradient(90deg,transparent 0%,black 3%,black 97%,transparent 100%);-webkit-mask-image:linear-gradient(90deg,transparent 0%,black 3%,black 97%,transparent 100%)}
+.mq-track{display:flex;white-space:nowrap;animation:mq 35s linear infinite;will-change:transform}
+.mq-wrap:hover .mq-track{animation-play-state:paused}
+@keyframes mq{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.mq-item{display:inline-flex;align-items:center;gap:8px;padding:0 24px;font:600 12px var(--font-o);letter-spacing:1px;color:rgba(255,255,255,0.95);border-right:1px solid rgba(255,255,255,0.15)}
+#navbar{position:fixed;top:40px;width:100%;height:64px;z-index:999;background:rgba(4,4,10,0.92);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border-bottom:1px solid rgba(255,120,0,0.12);transform:translateY(-100%);animation:nsi .6s .3s var(--ease-b) forwards}
+@keyframes nsi{to{transform:translateY(0)}}
+#navbar.scrolled{background:rgba(4,4,10,0.98);border-bottom-color:rgba(255,120,0,0.25);box-shadow:0 4px 30px rgba(0,0,0,0.5)}
+.nav-in{max-width:1200px;margin:0 auto;height:100%;padding:0 32px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.nav-logo{display:flex;align-items:center;gap:10px;cursor:pointer}
+.nav-logo svg{filter:drop-shadow(0 0 8px rgba(255,120,0,0.5));transition:filter .3s}
+.nav-logo:hover svg{filter:drop-shadow(0 0 16px rgba(255,120,0,0.9))}
+.logo-a{font:400 22px var(--font-d);letter-spacing:3px;color:var(--amber)}
+.logo-b{font:400 22px var(--font-d);letter-spacing:3px;color:var(--text-1)}
+.nav-links{display:flex;align-items:center;gap:24px}
+.nav-lang-picker{background:var(--amber-dim);border:1px solid var(--border-amber);border-radius:100px;padding:6px 16px;display:flex;align-items:center;gap:8px;font:600 12px var(--font-u);color:var(--amber);cursor:pointer;transition:all 0.3s}
+.nav-lang-picker:hover{background:var(--amber);color:#000;box-shadow:0 6px 20px var(--amber-glow)}
+.nav-lang-picker select{background:none;border:none;color:inherit;font:inherit;outline:none;cursor:pointer;appearance:none;padding-right:12px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='currentColor' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right center}
+.nav-lang-picker select option{color:var(--text-1);background:var(--base)}
+.nav-link{font:600 11px var(--font-u);letter-spacing:3px;color:var(--text-2);text-decoration:none;padding:6px 0;position:relative;transition:all .3s cubic-bezier(0.4,0,0.2,1)}
+.nav-link::after{content:'';position:absolute;bottom:-2px;left:0;width:0;height:2px;background:var(--amber);transition:width .3s cubic-bezier(0.4,0,0.2,1)}
+.nav-link:hover,.nav-link.active{color:var(--amber);transform:translateY(-2px)}.nav-link:hover::after,.nav-link.active::after{width:100%}
+.loc-badge{display:flex;align-items:center;gap:6px;padding:4px 12px;background:rgba(0,230,118,0.06);border:1px solid rgba(0,230,118,0.2);border-radius:4px;font:500 10px var(--font-o);letter-spacing:2px;color:var(--safe);animation:ba .5s var(--ease-b)}
+@keyframes ba{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+.nav-burger{display:none;flex-direction:column;gap:5px;padding:4px;background:none;border:none;cursor:pointer}
+.nav-burger span{display:block;width:22px;height:2px;background:var(--text-2);transition:.3s}
+#hero{min-height:100vh;padding:104px 32px 40px;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:5}
+.hero-in{max-width:1200px;margin:0 auto;width:100%;display:grid;grid-template-columns:1fr 420px;gap:60px;align-items:center}
+.hero-ey{display:flex;align-items:center;gap:12px;font:500 11px var(--font-o);letter-spacing:5px;color:var(--amber);opacity:0;transform:translateX(-20px);animation:sil .6s .5s var(--ease-s) forwards}
+.ey-line{width:32px;height:1px;background:var(--amber);flex-shrink:0}
+@keyframes sil{to{opacity:1;transform:translateX(0)}}
+.h1{display:flex;flex-direction:column;margin:20px 0}
+.h1-l{font:400 88px/.92 var(--font-d);letter-spacing:2px;display:block;opacity:0;transform:translateY(30px)}
+#h1a{color:var(--text-1);animation:siu .7s .7s var(--ease-b) forwards}
+#h1b{background:linear-gradient(135deg,#FF7800,#FF3300);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:siu .7s .85s var(--ease-b) forwards}
+#h1c{color:var(--danger);text-shadow:0 0 40px rgba(255,26,26,0.4);animation:siu .7s 1s var(--ease-b) forwards}
+@keyframes siu{to{opacity:1;transform:translateY(0)}}
+.hero-sub{font:400 19px/1.75 var(--font-u);color:var(--text-2);max-width:520px;opacity:0;animation:fi .8s 1.2s ease forwards}
+.hero-sub strong{color:var(--text-1);font-weight:600}
+@keyframes fi{to{opacity:1}}
+.hero-stats{display:flex;align-items:center;gap:0;border-top:1px solid var(--border-1);border-bottom:1px solid var(--border-1);margin:32px 0;padding:24px 0;opacity:0;animation:fi .8s 1.4s ease forwards}
+.stat-i{flex:1;padding:0 24px}.stat-i:first-child{padding-left:0}
+.stat-n{font:600 48px var(--font-o);color:var(--amber);line-height:1}
+.stat-lb{font:500 12px var(--font-u);letter-spacing:3px;color:var(--text-3);margin-top:4px}
+.stat-div{width:1px;height:40px;background:var(--border-1);flex-shrink:0}
+.hero-cta{display:inline-flex;align-items:center;gap:12px;padding:16px 36px;background:var(--amber);color:#000;border:none;font:700 13px var(--font-u);letter-spacing:3px;text-transform:uppercase;border-radius:var(--r-sm);cursor:pointer;position:relative;overflow:hidden;transition:all .3s var(--ease-b);opacity:0;animation:fi .8s 1.6s ease forwards}
+.hero-cta:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 16px 40px rgba(255,120,0,0.5)}
+.cta-shim{position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.25),transparent);animation:shim 2.5s ease 2s infinite}
+@keyframes shim{0%{left:-60%}100%{left:140%}}
+.scroll-ind{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;opacity:0;animation:fi 1s 2s ease forwards}
+.scroll-ind span{font:500 9px var(--font-o);letter-spacing:4px;color:var(--text-3)}
+.scroll-arr{width:20px;height:20px;border-right:1.5px solid var(--text-3);border-bottom:1.5px solid var(--text-3);transform:rotate(45deg);animation:ab 1.5s ease-in-out infinite}
+@keyframes ab{0%,100%{transform:rotate(45deg) translateY(0)}50%{transform:rotate(45deg) translateY(5px)}}
+.hero-panel{background:var(--surface);border:1px solid var(--border-amber);border-radius:var(--r-xl);padding:28px;position:relative;overflow:hidden;opacity:0;animation:sir .8s 1s var(--ease-b) forwards}
+@keyframes sir{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+.hero-panel::before{content:'';position:absolute;top:-60px;right:-60px;width:160px;height:160px;background:radial-gradient(circle,rgba(255,120,0,0.12) 0%,transparent 70%);animation:pg 3s ease-in-out infinite}
+@keyframes pg{0%,100%{opacity:.6}50%{opacity:1}}
+.panel-scan{position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,120,0,0.6),transparent);animation:sd 3s ease-in-out infinite;pointer-events:none}
+@keyframes sd{0%{top:0;opacity:1}90%{top:100%;opacity:1}100%{top:100%;opacity:0}}
+.ph{display:flex;align-items:center;justify-content:space-between;padding-bottom:20px;border-bottom:1px solid var(--border-0);margin-bottom:20px}
+.ph-t{font:700 11px var(--font-o);letter-spacing:4px;color:var(--amber)}
+.ph-dot{width:10px;height:10px;border-radius:50%;background:var(--danger);box-shadow:0 0 10px var(--danger);animation:dp 1s ease infinite}
+@keyframes dp{0%,100%{transform:scale(1);box-shadow:0 0 10px var(--danger)}50%{transform:scale(1.3);box-shadow:0 0 20px var(--danger)}}
+.ti{padding:14px;border-bottom:1px solid var(--border-0);transition:all 0.3s;border-radius:var(--r-md)}.ti:last-child{border:none}
+.ti-icon{width:36px;height:36px;border-radius:var(--r-sm);display:inline-flex;align-items:center;justify-content:center;font-size:18px;float:left;margin-right:12px;margin-bottom:8px}
+.ti:hover{background:var(--elevated);transform:translateX(6px);box-shadow:0 8px 24px rgba(0,0,0,0.2)}
+.ti-icon.cyc{background:rgba(255,26,26,0.1);border:1px solid rgba(255,26,26,0.25);animation:isp 8s linear infinite}
+@keyframes isp{to{transform:rotate(360deg)}}
+.ti-icon.fld{background:rgba(0,180,255,0.1);border:1px solid rgba(0,180,255,0.25);animation:ifl 2s ease-in-out infinite}
+@keyframes ifl{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.ti-icon.rn{background:rgba(255,120,0,0.1);border:1px solid rgba(255,120,0,0.25)}
+.ti-name{font:700 13px var(--font-u);letter-spacing:1px;color:var(--text-1)}
+.ti-loc{font:400 11px var(--font-u);color:var(--text-3);margin-top:2px}
+.ti-badge{display:inline-block;font:700 9px var(--font-o);letter-spacing:2px;padding:2px 8px;border-radius:3px;margin-top:6px}
+.ti-badge.red{background:rgba(255,26,26,0.15);color:var(--danger)}.ti-badge.orange{background:rgba(255,120,0,0.15);color:var(--amber)}
+.ti-bar{height:2px;background:var(--border-0);border-radius:1px;margin-top:8px;clear:both;overflow:hidden}
+.ti-bar-fill{height:100%;border-radius:1px;animation:bl 1.5s var(--ease-s) forwards;transform-origin:left}
+@keyframes bl{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.pf{font:400 9px var(--font-o);letter-spacing:3px;color:var(--text-3);text-align:center;padding-top:16px;border-top:1px solid var(--border-0);margin-top:12px}
+.sec-ey{font:500 11px var(--font-o);letter-spacing:5px;color:var(--amber);display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.sec-ey::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border-amber),transparent)}
+.sec-t{font:400 72px/1 var(--font-d);color:var(--text-1);margin-bottom:60px;letter-spacing:2px}
+.prob-sec{padding:120px 32px;position:relative;z-index:5;background:linear-gradient(180deg,transparent,rgba(255,26,26,0.02),transparent)}
+.prob-sec::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--amber),transparent)}
+.prob-grid{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 72px 1fr;align-items:stretch}
+.p-danger{background:rgba(12,6,6,0.95);border:1px solid var(--border-danger);border-right:none;border-radius:var(--r-xl) 0 0 var(--r-xl);padding:40px;position:relative;overflow:hidden;transform:translateX(-60px);opacity:0;transition:all .8s var(--ease-b)}
+.p-danger.revealed{transform:translateX(0);opacity:1}
+.p-danger::after{content:'';position:absolute;top:-80px;right:-80px;width:200px;height:200px;background:radial-gradient(circle,rgba(255,26,26,0.08),transparent 70%);pointer-events:none}
+.term-bar{display:flex;align-items:center;gap:6px;margin-bottom:16px}
+.td-r{width:10px;height:10px;border-radius:50%;background:#FF5F57}.td-y{width:10px;height:10px;border-radius:50%;background:#FFBD2E}.td-g{width:10px;height:10px;border-radius:50%;background:#28CA41}
+.term-title{font:600 10px var(--font-o);letter-spacing:3px;color:var(--text-3);margin-left:8px}
+.pl-d{font:700 10px var(--font-o);letter-spacing:4px;color:var(--danger);margin-bottom:20px;display:flex;align-items:center;gap:8px}
+.pl-d::before{content:'●';animation:db 1s ease infinite}
+@keyframes db{0%,100%{opacity:1}50%{opacity:0}}
+.alert-term{background:rgba(0,0,0,0.5);border:1px solid rgba(255,26,26,0.12);border-radius:var(--r-sm);padding:20px;margin-bottom:24px}
+.term-ts{font:500 10px var(--font-o);letter-spacing:2px;color:var(--danger);margin-bottom:12px}
+.term-txt{font:400 14px/1.9 'Courier New',monospace;color:#9A7777}
+.term-txt::after{content:'|';color:var(--danger);animation:cb 1s ease infinite;margin-left:2px}
+@keyframes cb{0%,100%{opacity:1}50%{opacity:0}}
+.react-d{display:flex;gap:16px;align-items:center;padding:16px;background:rgba(255,26,26,0.04);border-radius:var(--r-md);margin-bottom:16px}
+.react-e{font-size:40px}.react-w{font:400 16px/1.6 var(--font-u);color:var(--text-2);font-style:italic}
+.time-lost{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(255,26,26,0.08);border:1px solid rgba(255,26,26,0.2);border-radius:var(--r-sm);font:700 11px var(--font-o);letter-spacing:2px;color:var(--danger);animation:bp 2s ease infinite}
+@keyframes bp{0%,100%{box-shadow:0 0 0 0 rgba(255,26,26,0.2)}50%{box-shadow:0 0 0 8px rgba(255,26,26,0)}}
+.p-div{display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;z-index:2}
+.div-line{flex:1;width:1px;background:linear-gradient(180deg,transparent,var(--amber),transparent)}
+.div-arrow{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--amber),#FF3300);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;box-shadow:0 0 30px rgba(255,120,0,0.5);animation:ap 2s ease-in-out infinite;transform:scale(0);opacity:0;transition:all .6s .4s var(--ease-b);color:#fff}
+.div-arrow.revealed{transform:scale(1);opacity:1}
+@keyframes ap{0%,100%{box-shadow:0 0 30px rgba(255,120,0,0.5)}50%{box-shadow:0 0 50px rgba(255,120,0,0.8),0 0 80px rgba(255,120,0,0.3)}}
+.p-safe{background:rgba(4,10,8,0.95);border:1px solid var(--border-safe);border-left:none;border-radius:0 var(--r-xl) var(--r-xl) 0;padding:40px;position:relative;overflow:hidden;transform:translateX(60px);opacity:0;transition:all .8s var(--ease-b)}
+.p-safe.revealed{transform:translateX(0);opacity:1}
+.p-safe::before{content:'';position:absolute;bottom:-80px;left:-80px;width:200px;height:200px;background:radial-gradient(circle,rgba(0,230,118,0.06),transparent 70%)}
+.pl-s{font:700 10px var(--font-o);letter-spacing:4px;color:var(--safe);margin-bottom:20px}
+.adapted-m{font:500 20px/1.8 var(--font-u);color:var(--text-1);padding:20px;background:rgba(0,230,118,0.04);border-radius:var(--r-md);border-left:3px solid var(--safe);margin-bottom:24px}
+.adapted-m .ka{font-weight:700;color:var(--safe);font-size:20px}
+.act-strip{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.act-chip{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 16px;background:rgba(0,230,118,0.05);border:1px solid rgba(0,230,118,0.15);border-radius:var(--r-md);transition:all .25s var(--ease-b);cursor:default}
+.act-chip:hover{background:rgba(0,230,118,0.12);border-color:rgba(0,230,118,0.4);transform:translateY(-4px) scale(1.05);box-shadow:0 12px 24px rgba(0,230,118,0.15)}
+.ac-icon{font-size:24px}.ac-label{font:700 9px var(--font-o);letter-spacing:2px;color:var(--safe)}
+.time-saved{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(0,230,118,0.08);border:1px solid rgba(0,230,118,0.2);border-radius:var(--r-sm);font:700 11px var(--font-o);letter-spacing:2px;color:var(--safe)}
+.trans-sec{padding:120px 32px;position:relative;z-index:5}.trans-sec::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--amber),transparent)}
+.trans-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;max-width:1100px;margin:0 auto;align-items:start}
+.demo-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.demo-pill{display:flex;align-items:center;gap:6px;padding:6px 14px;background:var(--surface);border:1px solid var(--border-amber);border-radius:4px;font:600 11px var(--font-u);letter-spacing:1px;color:var(--amber);cursor:pointer;transition:all .25s var(--ease-b)}
+.demo-pill:hover{background:var(--amber-dim);box-shadow:0 8px 20px rgba(255,149,0,0.25);transform:translateY(-3px) scale(1.02);border-color:var(--amber);color:var(--text-1)}
+.ta-wrap{margin-bottom:16px}.ta-label{font:700 10px var(--font-o);letter-spacing:3px;color:var(--amber);margin-bottom:8px}
+.alert-ta{width:100%;background:var(--surface);border:1px solid var(--border-1);border-radius:var(--r-md);padding:20px;font:400 15px/1.8 'Courier New',monospace;color:var(--text-2);min-height:160px;max-height:300px;resize:vertical;transition:border-color .2s;box-sizing:border-box}
+.alert-ta::placeholder{color:var(--text-3)}.alert-ta:focus{outline:none;border-color:rgba(255,120,0,0.5);box-shadow:0 0 0 3px rgba(255,120,0,0.06)}
+.comm-label{font:700 10px var(--font-o);letter-spacing:3px;color:var(--amber);margin-bottom:8px}
+.comm-sel{width:100%;background:var(--surface);border:1px solid var(--border-amber);border-radius:var(--r-sm);padding:12px 40px 12px 16px;font:500 15px var(--font-u);color:var(--text-1);appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23FF7800' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 16px center;margin-bottom:16px;cursor:pointer}
+.comm-sel option{background:var(--base);color:var(--text-1)}
+.trans-cta{width:100%;padding:18px;background:var(--elevated);color:var(--text-3);border:none;border-radius:var(--r-md);font:400 18px var(--font-d);letter-spacing:4px;cursor:not-allowed;position:relative;overflow:hidden;transition:all .25s;display:flex;align-items:center;justify-content:center;gap:10px}
+.trans-cta.enabled{background:linear-gradient(135deg,var(--amber),#FF3300);color:#000;cursor:pointer}
+.trans-cta.enabled:hover{transform:translateY(-4px) scale(1.01);box-shadow:0 12px 40px rgba(255,149,0,0.45)}
+.t-spin{width:18px;height:18px;border:2px solid rgba(0,0,0,0.2);border-top-color:#000;border-radius:50%;animation:spin .6s linear infinite;display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+.out-empty{flex:1;border:1px dashed var(--border-1);border-radius:var(--r-xl);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:80px 32px;min-height:400px}
+.oe-icon{font-size:48px;opacity:.3}.oe-title{font:400 13px var(--font-o);letter-spacing:3px;color:var(--text-3);text-align:center}.oe-sub{font:400 12px var(--font-u);color:var(--text-4);text-align:center}
+.pipeline{background:var(--surface);border:1px solid var(--border-1);border-radius:var(--r-md);padding:24px;display:none}
+.pipe-title{font:700 10px var(--font-o);letter-spacing:3px;color:var(--text-3);margin-bottom:20px}
+.ag-row{display:flex;align-items:center;gap:16px;padding:10px 0;position:relative}
+.ag-row:not(:last-child)::after{content:'';position:absolute;left:15px;top:calc(100% - 10px);width:1px;height:20px;background:var(--border-1);transition:background .3s}
+.ag-row.done:not(:last-child)::after{background:var(--safe)}
+.ag-num{width:32px;height:32px;border-radius:50%;border:1px solid var(--border-1);display:flex;align-items:center;justify-content:center;font:400 14px var(--font-o);color:var(--text-3);flex-shrink:0;transition:all .3s;position:relative}
+.ag-row.running .ag-num{border-color:var(--amber);color:var(--amber);box-shadow:0 0 0 4px rgba(255,120,0,0.1)}
+.ag-row.running .ag-num::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid transparent;border-top-color:var(--amber);animation:spin .8s linear infinite}
+.ag-row.done .ag-num{background:var(--safe);border-color:var(--safe);color:#000}
+.ag-name{font:600 13px var(--font-u);color:var(--text-1);letter-spacing:.5px}
+.ag-desc{font:400 11px var(--font-u);color:var(--text-3);margin-top:2px}
+.ag-row.running .ag-name{color:var(--amber)}.ag-row.done .ag-name{color:var(--safe)}
+.results{display:none;flex-direction:column;gap:20px}
+.sev-w{display:flex;align-items:center;gap:20px;background:var(--surface);border-radius:var(--r-md);padding:20px;border:1px solid var(--border-1)}
+.sev-orb{width:80px;height:80px;border-radius:50%;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font:700 11px var(--font-o);letter-spacing:1px;color:#fff}
+.sev-critical{background:rgba(255,26,26,0.2);border:2px solid var(--danger);animation:dp 2s ease infinite}
+.sev-high{background:rgba(255,120,0,0.2);border:2px solid var(--amber);animation:ap 2s ease infinite}
+.sev-medium{background:rgba(255,170,0,0.15);border:2px solid #FFAA00}
+.sev-low{background:rgba(0,230,118,0.1);border:2px solid var(--safe)}
+.sev-info{flex:1}.sev-info h3{font:400 24px var(--font-d);letter-spacing:2px;margin-bottom:4px}
+.sev-dots{display:flex;gap:6px;margin-top:6px}.sev-dot{width:10px;height:10px;border-radius:50%;background:var(--elevated);transition:all .3s}
+.sev-dot.f-critical,.sev-dot.f-high{background:var(--danger);box-shadow:0 0 6px var(--danger)}.sev-dot.f-medium{background:var(--amber);box-shadow:0 0 6px var(--amber)}.sev-dot.f-low{background:var(--safe);box-shadow:0 0 6px var(--safe)}
+.impact-timer{font:400 32px var(--font-o);letter-spacing:2px;color:var(--danger);flex-shrink:0;text-align:right}
+.timer-label{font:500 9px var(--font-u);letter-spacing:2px;color:var(--text-3);text-align:right;margin-top:2px}
+.comp-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.comp-before{background:rgba(255,59,48,0.03);border:1px solid var(--border-danger);padding:24px;border-radius:var(--r-md);transition:all 0.4s var(--ease-b);box-shadow:0 10px 30px rgba(0,0,0,0.1)}
+.comp-before:hover{transform:translateY(-6px);box-shadow:0 16px 40px rgba(255,59,48,0.1);background:rgba(255,59,48,0.06)}
+.comp-after{background:rgba(52,199,89,0.03);border:1px solid var(--border-safe);padding:24px;border-radius:var(--r-md);transition:all 0.4s var(--ease-b);box-shadow:0 10px 30px rgba(0,0,0,0.1)}
+.comp-after:hover{transform:translateY(-6px);box-shadow:0 16px 40px rgba(52,199,89,0.1);background:rgba(52,199,89,0.06)}
+.comp-tag{font:700 9px var(--font-o);letter-spacing:3px;margin-bottom:12px}.comp-tag.dt{color:var(--danger)}.comp-tag.st{color:var(--safe)}
+.before-txt{font:400 13px/1.8 'Courier New',monospace;color:var(--text-3)}.after-txt{font:500 17px/1.7 var(--font-u);color:var(--text-1);white-space:pre-line}
+.fmt-tabs{display:flex;gap:4px;background:var(--surface);padding:4px;border-radius:var(--r-sm)}
+.fmt-tab{flex:1;padding:8px;border-radius:4px;font:600 11px var(--font-u);letter-spacing:1px;text-transform:uppercase;background:transparent;color:var(--text-3);cursor:pointer;transition:all .2s;border:none}
+.fmt-tab.active{background:var(--amber);color:#000}
+.fmt-content{background:var(--surface);border:1px solid var(--border-1);border-radius:var(--r-md);padding:20px;font:400 16px/1.8 var(--font-u);color:var(--text-1);min-height:80px;white-space:pre-wrap}
+.res-actions{display:flex;gap:12px;align-items:center}
+.speak-btn{display:flex;align-items:center;gap:8px;padding:10px 20px;background:rgba(0,230,118,0.06);border:1px solid var(--border-safe);border-radius:var(--r-sm);font:600 11px var(--font-o);letter-spacing:2px;color:var(--safe);cursor:pointer;transition:all .2s}
+.speak-btn:hover{background:rgba(0,230,118,0.12);box-shadow:0 0 20px rgba(0,230,118,0.15)}
+.copy-btn{display:flex;align-items:center;gap:8px;padding:10px 20px;background:transparent;border:1px solid var(--border-1);border-radius:var(--r-sm);font:600 11px var(--font-o);letter-spacing:2px;color:var(--text-2);cursor:pointer;transition:all .2s}
+.copy-btn:hover{border-color:var(--border-amber);color:var(--amber)}
+.error-card{background:rgba(255,26,26,0.06);border:1px solid var(--border-danger);border-radius:var(--r-md);padding:20px;display:none}
+.err-title{font:700 14px var(--font-u);color:var(--danger);margin-bottom:4px}.err-msg{font:400 13px var(--font-u);color:var(--text-2)}
+.surv-sec{padding:120px 32px;position:relative;z-index:5;background:var(--base)}.surv-sec::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--safe),transparent)}
+.surv-tabs{display:flex;gap:8px;margin-bottom:60px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px;max-width:1000px;margin-left:auto;margin-right:auto}.surv-tabs::-webkit-scrollbar{display:none}
+.surv-tab{display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 24px;background:var(--surface);border:1px solid var(--border-1);border-radius:var(--r-md);cursor:pointer;transition:all .3s var(--ease-b);flex-shrink:0;min-width:90px;color:var(--text-1)}
+.surv-tab:hover{border-color:var(--border-amber);background:var(--elevated);transform:translateY(-4px);box-shadow:0 12px 24px rgba(0,0,0,0.15)}
+.surv-tab.active{border-color:var(--amber);background:var(--amber-dim);transform:translateY(-4px);box-shadow:0 12px 24px rgba(255,149,0,0.2)}
+.tab-ico{font-size:28px}.tab-lbl{font:600 10px var(--font-o);letter-spacing:2px;color:var(--text-3);text-align:center}
+.surv-tab.active .tab-lbl{color:var(--amber)}
+.surv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(350px,1fr));gap:32px;max-width:1050px;margin:0 auto}
+.s-card{background:var(--surface);border:1px solid var(--border-1);border-radius:var(--r-xl);padding:32px 24px;transition:all .4s var(--ease-b);display:flex;flex-direction:column;gap:16px;box-shadow:0 8px 24px rgba(0,0,0,0.15)}
+.s-card:hover{border-color:var(--border-amber);transform:translateY(-8px);box-shadow:0 24px 48px rgba(0,0,0,0.4),0 0 30px rgba(255,149,0,0.15)}
+.sc-head{display:flex;align-items:center;gap:12px}
+.sc-icon{width:48px;height:48px;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;font-size:24px;background:var(--amber-dim);border:1px solid var(--border-amber);flex-shrink:0}
+.sc-title{font:400 22px var(--font-d);letter-spacing:1px;color:var(--text-1)}
+.sc-svg{width:100%;height:180px;background:var(--base);border-radius:var(--r-sm);overflow:hidden}
+.sc-steps{list-style:none;display:flex;flex-direction:column;gap:8px}
+.sc-steps li{display:flex;gap:10px;align-items:flex-start;font:400 15px/1.6 var(--font-u);color:var(--text-2);transition:all .3s}
+.sc-steps li.active{color:var(--text-1)}.sc-steps li.active .sn{background:var(--amber);color:#000;border-color:var(--amber)}
+.sn{width:22px;height:22px;border-radius:50%;border:1px solid var(--border-1);display:flex;align-items:center;justify-content:center;font:700 10px var(--font-o);flex-shrink:0;margin-top:2px;color:var(--text-3);transition:all .3s}
+.sc-actions{display:flex;gap:8px;align-items:center;margin-top:auto}
+.replay-btn{padding:6px 14px;border-radius:4px;font:600 10px var(--font-o);letter-spacing:2px;color:var(--amber);background:var(--amber-dim);border:1px solid var(--border-amber);cursor:pointer;transition:all .3s}
+.replay-btn:hover{background:rgba(255,120,0,0.15)}
+.sunao-btn{padding:8px 16px;background:transparent;border:1px solid var(--border-safe);border-radius:4px;font:600 10px var(--font-o);letter-spacing:2px;color:var(--safe);cursor:pointer;transition:all .2s}
+.sunao-btn:hover{background:rgba(0,230,118,0.06);border-color:var(--safe)}
+.offline-pill{font:600 9px var(--font-o);letter-spacing:2px;color:var(--safe);background:rgba(0,230,118,0.06);border:1px solid rgba(0,230,118,0.2);border-radius:4px;padding:3px 8px}
+.sos-sec{padding:120px 32px;position:relative;z-index:5}.sos-sec::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--danger),transparent)}
+.sos-t{font:400 72px/1 var(--font-d);color:var(--danger);letter-spacing:2px;margin-bottom:12px}
+.sos-sub{font:400 15px var(--font-u);color:var(--text-2);letter-spacing:2px;margin-bottom:60px}
+.sos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:900px;margin:0 auto 60px}
+.ec{background:var(--surface);border:1px solid var(--border-danger);border-radius:var(--r-xl);padding:36px 20px;text-align:center;text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:12px;position:relative;overflow:hidden;transition:all .35s var(--ease-b);opacity:0;transform:translateY(30px);color:var(--text-1)}
+.ec.revealed{opacity:1;transform:translateY(0)}
+.ec-glow{position:absolute;top:-2px;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--danger),transparent);transform:scaleX(0);transition:transform .35s}
+.ec:hover .ec-glow{transform:scaleX(1)}.ec:hover{transform:translateY(-8px);border-color:var(--danger);box-shadow:0 20px 40px rgba(255,26,26,0.2)}
+.ec-icon{font-size:44px}.ec-num{font:600 52px var(--font-o);color:var(--danger);line-height:1}
+.ec-name{font:600 11px var(--font-u);letter-spacing:3px;color:var(--text-2);text-align:center}
+.ec-call{font:700 10px var(--font-o);letter-spacing:2px;color:var(--danger);background:rgba(255,26,26,0.08);border:1px solid rgba(255,26,26,0.2);border-radius:4px;padding:6px 14px;transition:all .2s;display:block}
+.ec:hover .ec-call{background:rgba(255,26,26,0.15)}
+.ec-hover-eff{transition:all .3s ease, transform .2s var(--ease-b)}
+.ec-hover-eff:hover{transform:translateY(-8px) scale(1.02);box-shadow:0 15px 30px rgba(0,0,0,0.3)}
+.res-sec{max-width:900px;margin:0 auto}
+.res-title{font:400 36px var(--font-d);letter-spacing:2px;color:var(--text-1);margin-bottom:20px}
+.res-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.res-card{display:flex;gap:16px;align-items:center;padding:24px;background:var(--surface);border:1px solid var(--border-1);border-radius:var(--r-md);transition:all .4s var(--ease-b);text-decoration:none;color:var(--text-1);box-shadow:0 6px 20px rgba(0,0,0,0.15)}
+.res-card:hover{border-color:var(--border-amber);transform:translateY(-6px);box-shadow:0 20px 40px rgba(255,149,0,0.12)}
+.footer{background:var(--base);border-top:1px solid var(--border-1);padding:80px 32px;position:relative;z-index:5;text-align:center}
+.footer-in{max-width:1000px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:12px;font:400 15px var(--font-u);color:var(--text-2);letter-spacing:1px}
+.footer-brand{font:400 36px var(--font-d);color:var(--text-1);letter-spacing:4px;margin-bottom:8px}
+.footer-tag{font:400 18px var(--font-u);color:var(--amber);margin-bottom:16px}
+.footer-disc{max-width:800px;margin:40px auto 0;font:400 13px var(--font-u);color:var(--text-4);letter-spacing:1px;padding-top:24px;border-top:1px solid var(--border-0)}
+#fab-cluster{position:fixed;right:24px;bottom:24px;display:flex;flex-direction:column;align-items:center;gap:12px;z-index:9998}
+.fab-item{position:relative}
+.fab-s{width:44px;height:44px;border-radius:50%;background:var(--surface);border:1px solid var(--border-1);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--text-2);cursor:pointer;transition:all .3s var(--ease-b)}
+.fab-s:hover{border-color:var(--border-amber);color:var(--amber);background:var(--elevated);transform:translateY(-4px) scale(1.1);box-shadow:0 10px 24px rgba(255,149,0,0.2)}
+.fab-v{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#FF7800,#FF2020);border:none;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;box-shadow:0 8px 32px rgba(255,120,0,0.4);transition:all .25s}
+.fab-v:hover{transform:scale(1.08);box-shadow:0 12px 40px rgba(255,120,0,0.6)}
+.fab-v.listening{animation:vr 1s ease infinite}
+@keyframes vr{0%{box-shadow:0 8px 32px rgba(255,120,0,0.4),0 0 0 0 rgba(255,120,0,0.6)}100%{box-shadow:0 8px 32px rgba(255,120,0,0.4),0 0 0 20px rgba(255,120,0,0)}}
+.fab-tip{position:absolute;right:calc(100% + 12px);top:50%;transform:translateY(-50%);white-space:nowrap;background:var(--elevated);border:1px solid var(--border-1);border-radius:4px;padding:4px 10px;font:500 11px var(--font-u);letter-spacing:1px;color:var(--text-2);opacity:0;pointer-events:none;transition:opacity .2s}
+.fab-item:hover .fab-tip{opacity:1}
+.loc-toast{position:fixed;bottom:100px;right:24px;z-index:9999;background:var(--elevated);border:1px solid var(--border-safe);border-radius:var(--r-md);padding:16px 20px;display:flex;gap:12px;align-items:center;backdrop-filter:var(--blur);transform:translateX(120%);transition:transform .5s var(--ease-b);max-width:260px;box-shadow:0 20px 40px rgba(0,0,0,0.5)}
+.loc-toast.show{transform:translateX(0)}
+.toast-ico{font-size:24px}.toast-title{font:700 10px var(--font-o);letter-spacing:2px;color:var(--safe);margin-bottom:2px}
+.toast-body{font:400 13px var(--font-u);color:var(--text-1)}.toast-greet{font:400 20px var(--font-d);color:var(--safe);letter-spacing:2px;margin-top:2px}
+.toast-x{position:absolute;top:8px;right:10px;background:none;border:none;color:var(--text-3);font-size:16px;cursor:pointer}
+.emg-overlay{position:fixed;inset:0;z-index:10000;background:rgba(255,0,0,0.08);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.emg-overlay.show{display:flex}.emg-icon{font-size:80px;animation:dp 1s ease-in-out infinite}
+.emg-title{font:400 48px var(--font-d);color:var(--danger);letter-spacing:3px}
+.emg-call{width:280px;height:56px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;gap:10px;background:rgba(255,26,26,0.1);border:2px solid var(--danger);color:#fff;font:400 22px var(--font-d);letter-spacing:2px;text-decoration:none;transition:all .3s}
+.emg-call:hover{background:var(--danger)}.emg-close{margin-top:16px;background:none;border:1px solid var(--text-3);color:var(--text-3);padding:8px 24px;border-radius:4px;font:500 13px var(--font-u);cursor:pointer}
+.mob-menu{position:fixed;top:104px;left:0;right:0;z-index:998;background:rgba(4,4,10,0.98);backdrop-filter:var(--blur);display:flex;flex-direction:column;padding:24px;gap:16px;transform:translateY(-120%);transition:transform .3s;border-bottom:1px solid var(--border-1)}
+.mob-menu.open{transform:translateY(0)}
+.act-strip-r{display:flex;gap:10px;flex-wrap:wrap}
+.ach{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 14px;background:var(--amber-dim);border:1px solid var(--border-amber);border-radius:var(--r-md);min-width:56px}
+.ach-icon{font-size:22px}.ach-label{font:700 9px var(--font-o);letter-spacing:1px;color:var(--amber)}
+@keyframes ripple-expand{to{transform:scale(2.5);opacity:0}}
+@media(max-width:900px){.hero-in{grid-template-columns:1fr}.hero-panel{display:none}.h1-l{font-size:64px}.trans-grid{grid-template-columns:1fr}.prob-grid{grid-template-columns:1fr}.p-danger{border-radius:var(--r-xl);border-right:1px solid var(--border-danger)}.p-safe{border-left:1px solid var(--border-safe);border-radius:var(--r-xl)}.p-div{flex-direction:row;height:60px;width:100%}.div-line{height:1px;width:auto;flex:1}.sos-grid{grid-template-columns:repeat(2,1fr)}.surv-grid{grid-template-columns:1fr}.comp-grid{grid-template-columns:1fr}.nav-links{display:none!important}.nav-burger{display:flex}.footer-in{grid-template-columns:1fr;text-align:center}.res-grid{grid-template-columns:1fr}}
+@media(max-width:480px){.h1-l{font-size:48px!important}.sos-grid{grid-template-columns:1fr}.tab-lbl{display:none}.surv-tab{padding:14px;min-width:58px}.hero-stats{flex-wrap:wrap;gap:16px}.stat-div{display:none}.stat-i{flex:0 0 45%}#fab-cluster{right:12px;bottom:12px}.sec-t,.sos-t{font-size:48px}}
+@media(hover:none){body{cursor:auto}#cursor-dot,#cursor-ring{display:none}}
+</style>
+</head>
+<body>
+<div id="cursor-dot"></div><div id="cursor-ring"></div>
+<canvas class="rain-c" id="rain-c"></canvas><canvas class="particle-c" id="particle-c"></canvas>
+<div id="fog-layer"></div><div id="grid-overlay"></div><div id="scroll-progress"></div>
+<!-- MARQUEE -->
+<div id="marquee-bar"><div class="marquee-live"><span class="live-pulse"></span>LIVE ALERTS</div><div class="mq-wrap"><div class="mq-track" id="mq-track"></div></div></div>
+<!-- NAV -->
+<nav id="navbar"><div class="nav-in">
+<div class="nav-logo" onclick="document.getElementById('hero').scrollIntoView({behavior:'smooth'})">
+<svg width="36" height="36" viewBox="0 0 32 32"><polygon points="16,2 28,9 28,23 16,30 4,23 4,9" fill="none" stroke="#FF7800" stroke-width="1.5"/><polygon points="16,8 24,13 24,22 16,27 8,22 8,13" fill="rgba(255,120,0,0.1)" stroke="#FF7800" stroke-width="1"/><path d="M16 18L16 14" stroke="#FF7800" stroke-width="2" stroke-linecap="round"/><path d="M13 17Q13 14 16 14Q19 14 19 17" fill="none" stroke="#FF7800" stroke-width="1.5"/><path d="M11 19Q11 12 16 12Q21 12 21 19" fill="none" stroke="rgba(255,120,0,0.5)" stroke-width="1"/></svg>
+<span><span class="logo-a">ALERT</span><span class="logo-b">BRIDGE</span></span>
+</div>
+<div id="nav-loc"></div>
+<div class="nav-lang-picker">🌐 <select id="nav-lang-sel" onchange="changeGlobalLang(this.value)"><option value="bihar_flood">Language: Hindi</option><option value="tamil_coastal">Language: Tamil</option><option value="bengal_delta">Language: Bengali</option><option value="kerala_highland">Language: Malayalam</option><option value="maharashtra_urban">Language: Marathi</option><option value="andhra_coastal">Language: Telugu</option><option value="gujarat_kutch">Language: Gujarati</option><option value="karnataka_ghats">Language: Kannada</option><option value="odisha_coastal">Language: Odia</option><option value="punjab_plains">Language: Punjabi</option><option value="kashmir_valley">Language: Urdu</option></select></div>
+<div class="nav-links" id="nav-links-desk">
+<a href="#translate" class="nav-link">TRANSLATE</a><a href="#survive" class="nav-link">SURVIVE</a><a href="#sos" class="nav-link">SOS</a>
+</div>
+<button class="nav-burger" id="burger" onclick="this.classList.toggle('open');document.getElementById('mob-menu').classList.toggle('open')"><span></span><span></span><span></span></button>
+</div></nav>
+<div id="mob-menu" class="mob-menu"><a href="#translate" class="nav-link" onclick="closeMob()">TRANSLATE</a><a href="#survive" class="nav-link" onclick="closeMob()">SURVIVE</a><a href="#sos" class="nav-link" onclick="closeMob()">SOS</a></div>
+<!-- HERO -->
+<section id="hero"><div class="hero-in">
+<div class="hero-content">
+<div class="hero-ey"><span class="ey-line"></span>INDIA'S DISASTER COMMUNICATION CRISIS</div>
+<h1 class="h1"><span class="h1-l" id="h1a">ALERTS EXIST.</span><span class="h1-l" id="h1b">UNDERSTANDING</span><span class="h1-l" id="h1c">DOESN'T.</span></h1>
+<p class="hero-sub"><strong>400 million</strong> Indians live in flood and cyclone zones. Government alerts reach their phones — in English they cannot read. AlertBridge translates warnings into <strong>their language, their words, their action.</strong></p>
+<div class="hero-stats" id="hero-stats"><div class="stat-i"><div class="stat-n" data-target="22">0</div><div class="stat-lb">LANGUAGES</div></div><div class="stat-div"></div><div class="stat-i"><div class="stat-n" data-target="400" data-suffix="M+">0</div><div class="stat-lb">PEOPLE AT RISK</div></div><div class="stat-div"></div><div class="stat-i"><div class="stat-n" data-target="10" data-suffix="s">0</div><div class="stat-lb">SECONDS TO ACT</div></div></div>
+<button class="hero-cta clickable magnetic" onclick="document.getElementById('translate').scrollIntoView({behavior:'smooth'})"><span>TRANSLATE AN ALERT NOW</span><span>→</span><span class="cta-shim"></span></button>
+</div>
+<div class="hero-panel"><div class="ph"><span class="ph-t">ACTIVE THREATS</span><span class="ph-dot"></span></div>
+<div id="panel-body">
+<div class="ti"><div class="ti-icon cyc">🌀</div><div class="ti-name">CYCLONE DANA</div><div class="ti-loc">Bay of Bengal → Odisha coast</div><span class="ti-badge red">RED ALERT</span><div class="ti-bar"><div class="ti-bar-fill" style="width:85%;background:var(--danger)"></div></div></div>
+<div class="ti"><div class="ti-icon fld">🌊</div><div class="ti-name">GANGA FLOOD</div><div class="ti-loc">Above danger mark — Patna, Bihar</div><span class="ti-badge red">RED ALERT</span><div class="ti-bar"><div class="ti-bar-fill" style="width:78%;background:var(--danger)"></div></div></div>
+<div class="ti"><div class="ti-icon rn">⛈️</div><div class="ti-name">HEAVY RAINFALL</div><div class="ti-loc">Tamil Nadu — coastal districts</div><span class="ti-badge orange">ORANGE ALERT</span><div class="ti-bar"><div class="ti-bar-fill" style="width:55%;background:var(--amber)"></div></div></div>
+</div>
+<div class="pf">SOURCE: IMD · NDMA · CWC</div><div class="panel-scan"></div></div>
+</div><div class="scroll-ind"><div class="scroll-arr"></div><span>SCROLL</span></div></section>
+<!-- PROBLEM -->
+<section class="prob-sec"><div style="max-width:1100px;margin:0 auto">
+<div class="sec-ey">THE CRISIS</div><h2 class="sec-t">THE GAP THAT KILLS</h2>
+<div class="prob-grid">
+<div class="p-danger" id="pd">
+<div class="term-bar"><span class="td-r"></span><span class="td-y"></span><span class="td-g"></span><span class="term-title">RECEIVED 14:32:07</span></div>
+<div class="pl-d">WHAT RAMU KAKA RECEIVES</div>
+<div class="alert-term"><div class="term-ts">▸ IMD BULLETIN — RED ALERT</div><div class="term-txt">Severe Cyclonic Storm Warning. Deep depression over Bay of Bengal intensified. Storm surge of 2-3m expected. Red Alert for Puri, Jagatsinghpur, Kendrapara, Bhadrak. Wind 100-110 kmph gusting 120. NDMA advises immediate evacuation within 5km of coastline.</div></div>
+<div class="react-d"><span class="react-e">😕</span><span class="react-w">Cannot understand. Waits. Asks neighbour. Neighbour doesn't know either. Hours pass.</span></div>
+<div class="time-lost">⏰ 4 HOURS LOST</div>
+</div>
+<div class="p-div"><div class="div-line"></div><div class="div-arrow" id="da">→</div><div class="div-line"></div></div>
+<div class="p-safe" id="ps">
+<div class="pl-s">WHAT ALERTBRIDGE SENDS</div>
+<div class="adapted-m">⚠️ Ramu bhai — aaj raat <span class="ka">toofan aayega.</span><br><span class="ka">ABHI NIKLO.</span><br>Bacchon ko lo, dawaiyaan lo, kaagaz lo.<br>Panchayat building mein jao — woh safe hai.<br>Kal subah tak wapas mat aana.</div>
+<div class="act-strip"><div class="act-chip"><span class="ac-icon">🏃</span><span class="ac-label">RUN</span></div><div class="act-chip"><span class="ac-icon">👨‍👩‍👧</span><span class="ac-label">FAMILY</span></div><div class="act-chip"><span class="ac-icon">💊</span><span class="ac-label">MEDS</span></div><div class="act-chip"><span class="ac-icon">📄</span><span class="ac-label">DOCS</span></div><div class="act-chip"><span class="ac-icon">🏠</span><span class="ac-label">SHELTER</span></div></div>
+<div class="time-saved">⚡ 30 SECONDS TO ACT</div>
+</div>
+</div></div></section>
+<!-- TRANSLATOR -->
+<section id="translate" class="trans-sec"><div style="max-width:1100px;margin:0 auto">
+<div class="sec-ey">REAL-TIME AI TRANSLATION</div><h2 class="sec-t">TRANSLATE ANY ALERT</h2>
+<div class="trans-grid">
+<div class="trans-input">
+<div class="demo-pills"><button class="demo-pill clickable" onclick="loadDemo('cyclone')">🌀 Cyclone Demo</button><button class="demo-pill clickable" onclick="loadDemo('flood')">🌊 Flood Demo</button><button class="demo-pill clickable" onclick="loadDemo('rain')">⛈️ Heavy Rain Demo</button></div>
+<div class="ta-wrap"><div class="ta-label">PASTE GOVERNMENT ALERT</div><textarea id="alert-input" class="alert-ta" placeholder="Paste any IMD cyclone bulletin, CWC flood report, NDMA warning..." oninput="toggleBtn()"></textarea></div>
+<div class="comm-label">⟶ SENDING TO:</div>
+<select id="comm-sel" class="comm-sel" onchange="changeGlobalLang(this.value)"><option value="odisha_coastal">🌊 Coastal Odisha — Odia</option><option value="bihar_flood">🏞️ Bihar & UP — Hindi</option><option value="tamil_coastal">🌴 Tamil Nadu — Tamil</option><option value="kerala_highland">🏔️ Kerala — Malayalam</option><option value="bengal_delta">🌿 Bengal & Assam — Bengali</option><option value="maharashtra_urban">🏙️ Maharashtra — Marathi</option><option value="andhra_coastal">🌊 Andhra & Telangana — Telugu</option><option value="gujarat_kutch">🏜️ Gujarat — Gujarati</option><option value="karnataka_ghats">🏞️ Karnataka — Kannada</option><option value="punjab_plains">🌾 Punjab — Punjabi</option><option value="kashmir_valley">🏔️ Kashmir — Urdu</option></select>
+<button id="trans-btn" class="trans-cta clickable magnetic" onclick="translateAlert()" disabled><span id="btn-text">TRANSLATE ALERT →</span><div class="t-spin" id="btn-spin"></div></button>
+<div class="error-card" id="err-card"><div class="err-title" id="err-title">⚠️ Error</div><div class="err-msg" id="err-msg"></div></div>
+</div>
+<div class="trans-output" id="output-panel">
+<div class="out-empty" id="out-empty"><div class="oe-icon">📡</div><div class="oe-title">PASTE AN ALERT AND TRANSLATE</div><div class="oe-sub">AI will adapt it for your community</div></div>
+<div class="pipeline" id="pipeline"><div class="pipe-title">AI PIPELINE</div>
+<div class="ag-row" id="ag1"><div class="ag-num" id="agn1">1</div><div><div class="ag-name">EXTRACTION AGENT</div><div class="ag-desc" id="agd1">Waiting...</div></div></div>
+<div class="ag-row" id="ag2"><div class="ag-num" id="agn2">2</div><div><div class="ag-name">ADAPTATION AGENT</div><div class="ag-desc" id="agd2">Waiting...</div></div></div>
+<div class="ag-row" id="ag3"><div class="ag-num" id="agn3">3</div><div><div class="ag-name">FORMAT AGENT</div><div class="ag-desc" id="agd3">Waiting...</div></div></div>
+</div>
+<div class="results" id="results">
+<div class="sev-w"><div class="sev-orb" id="sev-orb"><span id="sev-txt">—</span></div><div class="sev-info"><h3 id="sev-level">AWAITING ANALYSIS</h3><div class="sev-dots" id="sev-dots"></div><div id="sev-areas" style="font:400 11px var(--font-u);color:var(--text-3);margin-top:4px"></div></div><div><div class="impact-timer" id="imp-timer">--:--:--</div><div class="timer-label">IMPACT IN</div></div></div>
+<div class="act-strip-r" id="act-strip-r"></div>
+<div class="comp-grid"><div class="comp-before"><div class="comp-tag dt">❌ ORIGINAL ALERT</div><div class="before-txt" id="before-txt"></div></div><div class="comp-after"><div class="comp-tag st">✅ ALERTBRIDGE VERSION</div><div class="after-txt" id="after-txt"></div></div></div>
+<div class="fmt-tabs"><button class="fmt-tab active" data-tab="whatsapp" onclick="showTab('whatsapp')">💬 WHATSAPP</button><button class="fmt-tab" data-tab="sms" onclick="showTab('sms')">📱 SMS</button><button class="fmt-tab" data-tab="voice" onclick="showTab('voice')">🔊 VOICE</button></div>
+<div class="fmt-content" id="fmt-content"></div>
+<div class="moti-strip" style="background:rgba(0,180,255,0.05);border:1px solid rgba(0,180,255,0.2);padding:14px;border-radius:var(--r-sm);margin:16px 0;text-align:center;font:700 13px var(--font-o);letter-spacing:3px;color:var(--info);box-shadow:0 0 20px rgba(0,180,255,0.05);animation:fog-b 4s infinite">💡 STAY CALM. STAY TOGETHER. WE WILL OVERCOME THIS.</div>
+<div class="res-actions"><button class="speak-btn clickable" onclick="speakResult()">🔊 SUNAO / HEAR ALERT</button><button class="copy-btn clickable" onclick="copyResult()">📋 COPY</button></div>
+</div>
+</div>
+</div></div></section>
+<!-- SURVIVAL -->
+<section id="survive" class="surv-sec"><div style="max-width:1000px;margin:0 auto">
+<div class="sec-ey">OFFLINE SURVIVAL KNOWLEDGE</div><h2 class="sec-t">SURVIVE BEFORE HELP ARRIVES</h2>
+<div class="surv-tabs" id="surv-tabs"><button class="surv-tab active" onclick="showSurvTab('first_aid',this)"><span class="tab-ico">🚑</span><span class="tab-lbl">FIRST AID</span></button><button class="surv-tab" onclick="showSurvTab('water',this)"><span class="tab-ico">💧</span><span class="tab-lbl">WATER</span></button><button class="surv-tab" onclick="showSurvTab('shelter',this)"><span class="tab-ico">⛺</span><span class="tab-lbl">SHELTER</span></button><button class="surv-tab" onclick="showSurvTab('protect',this)"><span class="tab-ico">🛡️</span><span class="tab-lbl">PROTECT</span></button><button class="surv-tab" onclick="showSurvTab('signal',this)"><span class="tab-ico">🆘</span><span class="tab-lbl">SIGNAL</span></button></div>
+<div class="surv-grid" id="surv-content"></div>
+</div></section>
+<!-- SOS -->
+<section id="sos" class="sos-sec"><div style="max-width:900px;margin:0 auto">
+<div class="sec-ey" style="color:var(--danger)">EMERGENCY</div><h2 class="sos-t">EMERGENCY CONTACTS</h2><p class="sos-sub">One tap to call. Works on any phone.</p>
+<div class="sos-grid">
+<a href="tel:1078" class="ec clickable ec-hover-eff" id="ec0"><div class="ec-glow"></div><div class="ec-icon">🆘</div><div class="ec-num">1078</div><div class="ec-name">NDRF RESCUE</div><div class="ec-call">📞 TAP TO CALL</div></a>
+<a href="tel:108" class="ec clickable ec-hover-eff" id="ec1"><div class="ec-glow"></div><div class="ec-icon">🚑</div><div class="ec-num">108</div><div class="ec-name">AMBULANCE</div><div class="ec-call">📞 TAP TO CALL</div></a>
+<a href="tel:101" class="ec clickable ec-hover-eff" id="ec2"><div class="ec-glow"></div><div class="ec-icon">🚒</div><div class="ec-num">101</div><div class="ec-name">FIRE BRIGADE</div><div class="ec-call">📞 TAP TO CALL</div></a>
+<a href="tel:100" class="ec clickable ec-hover-eff" id="ec3"><div class="ec-glow"></div><div class="ec-icon">👮</div><div class="ec-num">100</div><div class="ec-name">POLICE</div><div class="ec-call">📞 TAP TO CALL</div></a>
+<a href="tel:112" class="ec clickable ec-hover-eff" id="ec4"><div class="ec-glow"></div><div class="ec-icon">📞</div><div class="ec-num">112</div><div class="ec-name">UNIFIED EMERGENCY</div><div class="ec-call">📞 TAP TO CALL</div></a>
+<a href="tel:1554" class="ec clickable ec-hover-eff" id="ec5"><div class="ec-glow"></div><div class="ec-icon">⚓</div><div class="ec-num">1554</div><div class="ec-name">COAST GUARD</div><div class="ec-call">📞 TAP TO CALL</div></a>
+</div>
+<div class="res-sec"><h3 class="res-title">SURVIVAL RESOURCES</h3><div class="res-grid">
+<a href="https://prasarbharati.gov.in/live-radio/" target="_blank" class="res-card clickable" title="Open All India Radio"><span class="res-ico">📻</span><div><div class="res-name">All India Radio</div><div class="res-desc">Disaster broadcasts 24/7</div></div></a>
+<a href="https://ndma.gov.in/Reference_Material/Maps" target="_blank" class="res-card clickable" title="Open NDMA Maps"><span class="res-ico">🗺️</span><div><div class="res-name">NDMA Maps</div><div class="res-desc">Flood & cyclone maps</div></div></a>
+<button onclick="document.getElementById('survive').scrollIntoView({behavior:'smooth'}); setTimeout(()=>showSurvTab('signal', document.querySelectorAll('.surv-tab')[4]), 400)" class="res-card clickable" style="text-align:left;background:var(--surface);border:1px solid var(--border-1)" title="Learn Signal & Power Tips"><span class="res-ico">🔋</span><div><div class="res-name">Battery Tips</div><div class="res-desc">Conserve phone power</div></div></button>
+</div></div>
+</div></section>
+<!-- FOOTER -->
+<footer class="footer"><div class="footer-in"><div class="footer-brand">ALERTBRIDGE</div><div class="footer-tag">The AI-Powered Disaster Survival Platform</div><div>Built with ❤️ by M S Abhishek to save lives across India.</div><div>Powered by Groq + LLaMA 3.3 + Regional Community Data</div></div><div class="footer-disc">AlertBridge is a community tool and does not replace official emergency services. Always follow local authority instructions. In extreme emergencies, immediately dial 112.</div></footer>
+<!-- TOAST -->
+<div class="loc-toast" id="loc-toast"><div class="toast-ico">📍</div><div><div class="toast-title">LOCATION DETECTED</div><div class="toast-body" id="toast-body">Switching to Hindi</div><div class="toast-greet" id="toast-greet">नमस्ते 🙏</div></div><button class="toast-x" onclick="document.getElementById('loc-toast').classList.remove('show')">✕</button></div>
+<!-- FABs -->
+<div id="fab-cluster"><div class="fab-item"><button class="fab-s clickable" id="light-fab" onclick="toggleLightMode()">☀️</button><span class="fab-tip">Light Mode</span></div><div class="fab-item"><button class="fab-s clickable" onclick="toggleContrast()">🌗</button><span class="fab-tip">High Contrast</span></div><div class="fab-item"><button class="fab-s clickable" onclick="changeTextSize(-1)">A-</button><span class="fab-tip">Decrease Text</span></div><div class="fab-item"><button class="fab-s clickable" onclick="changeTextSize(1)">A+</button><span class="fab-tip">Increase Text</span></div><div class="fab-item"><button class="fab-v clickable" id="voice-fab" onclick="toggleVoice()">🎤</button><span class="fab-tip">Voice Commands</span></div></div>
+<!-- EMERGENCY OVERLAY -->
+<div class="emg-overlay" id="emg-overlay"><div class="emg-icon">🚨</div><div class="emg-title">EMERGENCY MODE</div><a href="tel:1078" class="emg-call">🆘 1078 — NDRF RESCUE</a><a href="tel:108" class="emg-call">🚑 108 — AMBULANCE</a><a href="tel:112" class="emg-call">📞 112 — EMERGENCY</a><a href="tel:100" class="emg-call">👮 100 — POLICE</a><button class="emg-close" onclick="document.getElementById('emg-overlay').classList.remove('show')">✕ CLOSE</button></div>
+<script>
+'use strict';
+// ═══ CONFIG ═══
+let GROQ_KEY = localStorage.getItem('ab_groq_key') || 'YOUR_GROQ_API_KEY_HERE';
+if (GROQ_KEY === 'YOUR_GROQ_API_KEY_HERE' || !GROQ_KEY) {
+    const p = prompt('Welcome to AlertBridge! Please enter your Groq API Key to enable AI translations:');
+    if (p) { localStorage.setItem('ab_groq_key', p); GROQ_KEY = p; }
+}
+const GROQ_URL='https://api.groq.com/openai/v1/chat/completions';
+const OWM_KEY='YOUR_OPENWEATHERMAP_KEY_HERE';
+
+// ═══ DATA ═══
+const DEMOS={
+cyclone:{label:'🌀 Cyclone',text:'Severe Cyclonic Storm Warning: Deep depression over Bay of Bengal (13.5°N, 87.2°E) has intensified into a severe cyclonic storm. Named Cyclone DANA. Expected landfall near Puri-Jagatsinghpur coast between 2200-0200 hrs. Storm surge 2-3m above astronomical tide. Wind speed 100-110 kmph gusting 120. Red Alert: Puri, Jagatsinghpur, Kendrapara, Bhadrak. NDMA advises immediate evacuation within 5km of coastline. All fishing operations suspended. Fishermen advised not to venture into sea.'},
+flood:{label:'🌊 Flood',text:'Central Water Commission Flood Bulletin: Ganga at Patna (Bihar) flowing above Danger Level (DL) at 50.2m against DL of 48.6m. Rising trend. Tributaries Sone, Gandak, Kosi also in spate. Inundation reported in low-lying areas of Patna, Chapra, Hajipur. NDRF teams deployed. District Magistrate orders evacuation of 42 villages. Relief camps at primary schools on NH.'},
+rain:{label:'⛈️ Rain',text:'IMD Heavy Rain Warning: Very heavy rainfall (>204mm/24hrs) likely over coastal Tamil Nadu and Puducherry during next 48 hours. Extremely heavy rainfall at isolated places over delta districts. Orange Alert for Chennai, Cuddalore, Nagapattinam, Thanjavur. Waterlogging in low-lying areas expected. Avoid unnecessary travel.'}
+};
+const COMMUNITIES={
+odisha_coastal:{name:'Coastal Odisha',lang:'Odia',langCode:'or-IN',literacy:'low',shelter:'Gram Panchayat building at main chowk',type:'coastal fishing village',greeting:'ନମସ୍କାର',words:'toofan=storm,paani=water'},
+bihar_flood:{name:'Bihar Flood Zone',lang:'Bhojpuri Hindi',langCode:'hi-IN',literacy:'medium',shelter:'Primary school on the highway',type:'riverine farming',greeting:'नमस्ते',words:'baadhh=flood,bhaago=run'},
+tamil_coastal:{name:'Tamil Nadu Coast',lang:'Tamil',langCode:'ta-IN',literacy:'medium-high',shelter:'Government Higher Secondary School',type:'coastal fishing town',greeting:'வணக்கம்',words:'cyclone=சூறாவளி'},
+kerala_highland:{name:'Kerala Highlands',lang:'Malayalam',langCode:'ml-IN',literacy:'high',shelter:'Panchayat Community Hall',type:'highland farming',greeting:'നമസ്കാരം',words:'mala=hill,vellam=water'},
+bengal_delta:{name:'Bengal Delta',lang:'Bengali',langCode:'bn-IN',literacy:'medium',shelter:'Raised cyclone shelter',type:'coastal delta farming',greeting:'নমস্কার',words:'jhad=storm,banya=flood'},
+maharashtra_urban:{name:'Maharashtra',lang:'Marathi',langCode:'mr-IN',literacy:'high',shelter:'Local Municipal Ward Office',type:'urban/suburban',greeting:'नमस्कार',words:'shahar=city'},
+andhra_coastal:{name:'Andhra Coast',lang:'Telugu',langCode:'te-IN',literacy:'medium',shelter:'Zilla Parishad School',type:'coastal zone',greeting:'నమస్కారం',words:'tufanu=cyclone'},
+gujarat_kutch:{name:'Gujarat Kutch',lang:'Gujarati',langCode:'gu-IN',literacy:'medium',shelter:'Community Hall',type:'arid/coastal',greeting:'નમસ્તે',words:'rajasthan=desert'},
+karnataka_ghats:{name:'Karnataka Ghats',lang:'Kannada',langCode:'kn-IN',literacy:'medium-high',shelter:'Taluk Office',type:'hilly region',greeting:'ನಮಸ್ಕಾರ',words:'male=rain'},
+punjab_plains:{name:'Punjab Plains',lang:'Punjabi',langCode:'pa-IN',literacy:'high',shelter:'Gurudwara compound',type:'agricultural plains',greeting:'ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ',words:'harr=flood'},
+kashmir_valley:{name:'Kashmir Valley',lang:'Urdu',langCode:'ur-IN',literacy:'medium',shelter:'Local Mosque/School',type:'mountain valley',greeting:'السلام علیکم',words:'sailab=flood'}
+};
+const STATE_MAP={
+'Odisha':{community:'odisha_coastal',langCode:'or-IN',greeting:'ନମସ୍କାର',display:'Odisha • Odia'},
+'Bihar':{community:'bihar_flood',langCode:'hi-IN',greeting:'नमस्ते',display:'Bihar • Hindi'},
+'Uttar Pradesh':{community:'bihar_flood',langCode:'hi-IN',greeting:'नमस्ते',display:'UP • Hindi'},
+'Tamil Nadu':{community:'tamil_coastal',langCode:'ta-IN',greeting:'வணக்கம்',display:'Tamil Nadu • Tamil'},
+'Kerala':{community:'kerala_highland',langCode:'ml-IN',greeting:'നമസ്കാരം',display:'Kerala • Malayalam'},
+'West Bengal':{community:'bengal_delta',langCode:'bn-IN',greeting:'নমস্কার',display:'West Bengal • Bengali'},
+'Maharashtra':{community:'maharashtra_urban',langCode:'mr-IN',greeting:'नमस्कार',display:'Maharashtra • Marathi'},
+'Andhra Pradesh':{community:'andhra_coastal',langCode:'te-IN',greeting:'నమస్కారం',display:'Andhra • Telugu'},
+'Telangana':{community:'andhra_coastal',langCode:'te-IN',greeting:'నమస్కారం',display:'Telangana • Telugu'},
+'Gujarat':{community:'gujarat_kutch',langCode:'gu-IN',greeting:'નમસ્તે',display:'Gujarat • Gujarati'},
+'Karnataka':{community:'karnataka_ghats',langCode:'kn-IN',greeting:'ನಮಸ್ಕಾರ',display:'Karnataka • Kannada'},
+'Punjab':{community:'punjab_plains',langCode:'pa-IN',greeting:'ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ',display:'Punjab • Punjabi'},
+'Assam':{community:'bengal_delta',langCode:'as-IN',greeting:'নমস্কাৰ',display:'Assam • Assamese'},
+'Jammu and Kashmir':{community:'kashmir_valley',langCode:'ur-IN',greeting:'السلام علیکم',display:'Kashmir • Urdu'}
+};
+const SURV_DATA={
+first_aid:[
+{id:'cpr',icon:'❤️',title:'CPR — CHEST COMPRESSIONS',steps:['Lay person flat on hard surface','Place heel of hand on center of chest','Push hard and fast — 30 compressions','Give 2 rescue breaths','Repeat until help arrives'],svg:`<svg viewBox="0 0 280 180" xmlns="http://www.w3.org/2000/svg"><rect width="280" height="180" fill="#080910"/><rect x="60" y="100" width="160" height="40" rx="20" fill="#3A3A4A"><animateTransform attributeName="transform" type="translate" values="0,0;0,6;0,0;0,6;0,0" dur="1.2s" repeatCount="indefinite"/></rect><circle cx="60" cy="100" r="22" fill="#C8956A"/><rect x="148" y="82" width="24" height="14" rx="4" fill="#D4956A"><animateTransform attributeName="transform" type="translate" values="0,0;0,6;0,0;0,6;0,0" dur="1.2s" repeatCount="indefinite"/></rect><rect x="148" y="70" width="24" height="14" rx="4" fill="#C4855A"><animateTransform attributeName="transform" type="translate" values="0,0;0,6;0,0;0,6;0,0" dur="1.2s" repeatCount="indefinite"/></rect><line x1="160" y1="70" x2="160" y2="45" stroke="#9A6A4A" stroke-width="6" stroke-linecap="round"><animateTransform attributeName="transform" type="translate" values="0,0;0,6;0,0;0,6;0,0" dur="1.2s" repeatCount="indefinite"/></line><text x="156" y="116" font-size="14" text-anchor="middle" fill="#FF1A1A" style="animation:blink 1.2s infinite">❤️</text><rect x="210" y="20" width="56" height="28" rx="6" fill="rgba(255,120,0,0.15)" stroke="rgba(255,120,0,0.4)" stroke-width="1"/><text x="238" y="34" font-size="11" fill="#FF7800" text-anchor="middle" font-family="Oswald" font-weight="700" letter-spacing="1">×30</text><text x="238" y="44" font-size="7" fill="#FF7800" text-anchor="middle" font-family="Barlow Condensed" letter-spacing="1">COMPRESSIONS</text><text x="140" y="172" font-size="9" fill="#484C60" text-anchor="middle" font-family="Oswald" letter-spacing="2">30 COMPRESSIONS + 2 BREATHS</text></svg>`},
+{id:'bleed',icon:'🩸',title:'STOP BLEEDING',steps:['Find the wound','Press cloth/dupatta hard on wound','Keep pressing — do NOT lift','Hold for 10 minutes minimum','If blood soaks through, add more cloth on top'],svg:`<svg viewBox="0 0 280 180" xmlns="http://www.w3.org/2000/svg"><rect width="280" height="180" fill="#080910"/><path d="M60 60Q60 40 90 40L190 40Q220 40 220 60L220 130Q220 150 190 150L90 150Q60 150 60 130Z" fill="#C8956A"/><ellipse cx="140" cy="95" rx="28" ry="18" fill="#CC1111"><animate attributeName="rx" values="28;22;28" dur="3s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0.4;0.2" dur="4s" repeatCount="indefinite"/></ellipse><rect x="112" y="77" width="56" height="36" rx="6" fill="#EEE" opacity="0.9"><animate attributeName="y" values="77;79;77" dur="2s" repeatCount="indefinite"/></rect><rect x="108" y="58" width="64" height="22" rx="8" fill="#D4956A"><animate attributeName="y" values="58;62;58" dur="2s" repeatCount="indefinite"/></rect><rect x="10" y="10" width="70" height="28" rx="6" fill="rgba(255,26,26,0.1)" stroke="rgba(255,26,26,0.3)" stroke-width="1"/><text x="45" y="28" font-size="14" fill="#FF1A1A" text-anchor="middle" font-family="Oswald" font-weight="700">10:00</text><text x="140" y="172" font-size="9" fill="#484C60" text-anchor="middle" font-family="Oswald" letter-spacing="2">PRESS HARD — 10 MIN MINIMUM</text></svg>`},
+{id:'burns',icon:'🔥',title:'BURNS — COOL WITH WATER',steps:['Run cold water over burn for 20 minutes','Do NOT use ice, butter, or toothpaste','Cover with clean wet cloth','Take painkiller if available','Go to hospital for large burns'],svg:`<svg viewBox="0 0 280 180" xmlns="http://www.w3.org/2000/svg"><rect width="280" height="180" fill="#080910"/><path d="M120 160L100 100Q98 80 110 78Q122 76 122 95L122 88Q122 72 134 72Q146 72 146 88L146 84Q146 68 158 68Q170 68 170 84L170 88Q170 72 180 74Q190 76 188 92L188 130Q188 160 160 160Z" fill="#C8956A"/><ellipse cx="158" cy="110" rx="22" ry="18" fill="#FF4400" opacity="0.6"><animate attributeName="opacity" values="0.6;0.3;0.6" dur="3s" repeatCount="indefinite"/></ellipse><rect x="130" y="10" width="20" height="8" rx="3" fill="#667"/><ellipse cx="148" cy="30" rx="4" ry="6" fill="#00B4FF" opacity="0.8"><animate attributeName="cy" values="30;110;30" dur="1.2s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;0.9;0" dur="1.2s" repeatCount="indefinite"/></ellipse><ellipse cx="144" cy="20" rx="3" ry="5" fill="#00C8FF"><animate attributeName="cy" values="20;108;20" dur="1.2s" begin="0.4s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;0.8;0" dur="1.2s" begin="0.4s" repeatCount="indefinite"/></ellipse><circle cx="40" cy="50" r="24" fill="rgba(255,26,26,0.1)" stroke="rgba(255,26,26,0.3)" stroke-width="1"/><text x="40" y="44" text-anchor="middle" font-size="18">🧴</text><line x1="22" y1="32" x2="58" y2="68" stroke="#FF1A1A" stroke-width="3" stroke-linecap="round"/><line x1="58" y1="32" x2="22" y2="68" stroke="#FF1A1A" stroke-width="3" stroke-linecap="round"/><text x="40" y="88" font-size="7" fill="#FF5555" text-anchor="middle" font-family="Oswald" letter-spacing="1">NO BUTTER</text><rect x="196" y="15" width="74" height="28" rx="6" fill="rgba(0,180,255,0.1)" stroke="rgba(0,180,255,0.3)" stroke-width="1"/><text x="233" y="29" font-size="11" fill="#00B4FF" text-anchor="middle" font-family="Oswald" font-weight="700">20 MIN</text><text x="140" y="172" font-size="9" fill="#484C60" text-anchor="middle" font-family="Oswald" letter-spacing="2">COOL WITH WATER — NOT ICE</text></svg>`},
+{id:'bone',icon:'🦴',title:'BROKEN BONE — SPLINT',steps:['Do NOT try to straighten the bone','Find two sticks/boards for splint','Place sticks on either side of break','Tie with cloth strips — not too tight','Keep still until help comes'],svg:`<svg viewBox="0 0 280 180" xmlns="http://www.w3.org/2000/svg"><rect width="280" height="180" fill="#080910"/><path d="M80 40Q80 30 100 30L180 30Q200 30 200 40L200 140Q200 150 180 150L100 150Q80 150 80 140Z" fill="#C8956A"/><path d="M120 75L135 88L118 102L133 115" stroke="#FFF" stroke-width="1.5" fill="none" opacity="0.4" stroke-linecap="round"/><rect x="66" y="30" width="10" height="120" rx="3" fill="#8B6914"><animate attributeName="opacity" values="0;0;1;1" dur="3s" repeatCount="indefinite"/></rect><rect x="204" y="30" width="10" height="120" rx="3" fill="#8B6914"><animate attributeName="opacity" values="0;0;0;1" dur="3s" begin="0.5s" repeatCount="indefinite"/></rect><rect x="66" y="55" width="158" height="8" rx="2" fill="rgba(240,240,200,0.7)"><animate attributeName="opacity" values="0;0;0.7;0.7" dur="3s" repeatCount="indefinite"/></rect><rect x="66" y="87" width="158" height="8" rx="2" fill="rgba(240,240,200,0.7)"><animate attributeName="opacity" values="0;0;0;0.7;0.7" dur="3.5s" repeatCount="indefinite"/></rect><rect x="66" y="119" width="158" height="8" rx="2" fill="rgba(240,240,200,0.7)"><animate attributeName="opacity" values="0;0;0;0;0.7" dur="4s" repeatCount="indefinite"/></rect><circle cx="240" cy="40" r="20" fill="rgba(255,26,26,0.1)" stroke="rgba(255,26,26,0.3)" stroke-width="1"/><text x="240" y="36" text-anchor="middle" font-size="14">✋</text><line x1="225" y1="25" x2="255" y2="55" stroke="#FF1A1A" stroke-width="2.5"/><line x1="255" y1="25" x2="225" y2="55" stroke="#FF1A1A" stroke-width="2.5"/><text x="140" y="172" font-size="9" fill="#484C60" text-anchor="middle" font-family="Oswald" letter-spacing="2">IMMOBILIZE — DON'T STRAIGHTEN</text></svg>`},
+{id:'boil',icon:'💧',title:'WATER BOILING — SAFE WATER',steps:['Fill pot with clearest water available','Bring to a FULL rolling boil','Keep boiling for 1 full minute','Let cool before drinking','Store in clean covered container'],svg:`<svg viewBox="0 0 280 180" xmlns="http://www.w3.org/2000/svg"><rect width="280" height="180" fill="#080910"/><path d="M70 80L210 80L200 150L80 150Z" fill="#2A3A4A" stroke="#3A4A5A" stroke-width="1.5"/><rect x="60" y="72" width="160" height="14" rx="4" fill="#3A4A5A"/><path d="M72 82L208 82L200 148L80 148Z" fill="#1A3A5A" opacity="0.8"/><circle cx="100" cy="130" r="4" fill="rgba(0,180,255,0.5)"><animate attributeName="cy" values="140;82" dur="1.5s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;0.7;0" dur="1.5s" repeatCount="indefinite"/></circle><circle cx="140" cy="125" r="3" fill="rgba(0,200,255,0.4)"><animate attributeName="cy" values="140;82" dur="1.2s" begin="0.3s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;0.6;0" dur="1.2s" begin="0.3s" repeatCount="indefinite"/></circle><circle cx="170" cy="135" r="5" fill="rgba(0,160,255,0.4)"><animate attributeName="cy" values="140;82" dur="1.8s" begin="0.7s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;0.5;0" dur="1.8s" begin="0.7s" repeatCount="indefinite"/></circle><path d="M110 72Q106 62 110 52Q114 42 110 32" stroke="rgba(200,220,255,0.4)" fill="none" stroke-width="2.5" stroke-linecap="round"><animate attributeName="opacity" values="0;0.6;0" dur="2s" repeatCount="indefinite"/></path><path d="M140 72Q136 60 140 48Q144 36 140 24" stroke="rgba(200,220,255,0.35)" fill="none" stroke-width="2.5" stroke-linecap="round"><animate attributeName="opacity" values="0;0.5;0" dur="2.2s" begin="0.4s" repeatCount="indefinite"/></path><path d="M90 158Q95 148 100 158Q105 168 110 158Q115 148 120 158Q125 168 130 158Q135 148 140 158Q145 168 150 158Q155 148 160 158Q165 168 170 158Q175 148 180 158Q185 168 190 158" fill="none" stroke="#FF6600" stroke-width="3" stroke-linecap="round"><animate attributeName="stroke" values="#FF6600;#FF3300;#FF9900;#FF6600" dur="0.8s" repeatCount="indefinite"/></path><text x="140" y="172" font-size="9" fill="#484C60" text-anchor="middle" font-family="Oswald" letter-spacing="2">1 MIN BOILING = SAFE WATER</text></svg>`},
+{id:'signal',icon:'🔦',title:'RESCUE SIGNAL — SOS',steps:['Use mirror/phone screen to flash sunlight','Flash 3 times = international SOS','Make SOS on ground with rocks/sticks','Wave bright cloth from rooftop','Blow whistle 3 times if you have one'],svg:`<svg viewBox="0 0 280 180" xmlns="http://www.w3.org/2000/svg"><rect width="280" height="180" fill="#080910"/><circle cx="60" cy="80" r="14" fill="#C8956A"/><line x1="60" y1="94" x2="60" y2="145" stroke="#9A6A4A" stroke-width="5" stroke-linecap="round"/><line x1="60" y1="110" x2="35" y2="130" stroke="#9A6A4A" stroke-width="4" stroke-linecap="round"/><line x1="60" y1="110" x2="90" y2="90" stroke="#9A6A4A" stroke-width="4" stroke-linecap="round"/><line x1="60" y1="145" x2="45" y2="165" stroke="#9A6A4A" stroke-width="4" stroke-linecap="round"/><line x1="60" y1="145" x2="75" y2="165" stroke="#9A6A4A" stroke-width="4" stroke-linecap="round"/><rect x="88" y="76" width="26" height="32" rx="3" fill="#778899" stroke="#AABBCC" stroke-width="1"/><rect x="91" y="79" width="20" height="26" rx="2" fill="rgba(200,230,255,0.6)"/><path d="M108 90L240 30" stroke="rgba(255,255,150,0)" stroke-width="3" stroke-linecap="round"><animate attributeName="stroke" values="rgba(255,255,150,0);rgba(255,255,150,0.8);rgba(255,255,150,0)" dur="1.5s" repeatCount="indefinite"/><animate attributeName="stroke-width" values="1;4;1" dur="1.5s" repeatCount="indefinite"/></path><text x="230" y="35" font-size="20">🚁</text><rect x="91" y="79" width="20" height="26" rx="2" fill="white" opacity="0"><animate attributeName="opacity" values="0;0.9;0;0.7;0" dur="1.5s" repeatCount="indefinite"/></rect><text x="170" y="155" font-size="20" fill="none" stroke="rgba(255,120,0,0.6)" stroke-width="1" text-anchor="middle" font-family="Oswald" font-weight="700" letter-spacing="4">SOS</text><text x="140" y="172" font-size="9" fill="#484C60" text-anchor="middle" font-family="Oswald" letter-spacing="2">FLASH 3× = DISTRESS SIGNAL</text></svg>`}
+],
+water:[{icon:'💧',title:'BOIL WATER',steps:['Rolling boil for 1 minute','Let cool, store covered','Safest purification method']},{icon:'🏺',title:'FILTER WITH CLOTH',steps:['Fold clean cotton cloth 4 times','Pour water slowly through cloth','Removes large particles only','Still needs boiling after']},{icon:'☀️',title:'SODIS — SOLAR',steps:['Fill clear PET bottle','Place in full sun 6+ hours','UV kills bacteria','Works best in clear water']}],
+shelter:[{icon:'🏠',title:'FIND SAFE SHELTER',steps:['Go to pucca building/school','Stay on upper floors in flood','Stay AWAY from windows in cyclone','Take essential supplies']},{icon:'⛺',title:'TEMPORARY SHELTER',steps:['Use tarpaulin/plastic sheets','Tie to strong poles or trees','Face away from wind direction','Keep drainage around shelter']}],
+protect:[{icon:'🔌',title:'ELECTRICAL SAFETY',steps:['Turn off main power switch','Stay away from fallen wires','Do not touch wet appliances','Wait for authorities to restore']},{icon:'🐍',title:'AVOID SNAKES/ANIMALS',steps:['Floods displace snakes','Wear boots or thick shoes','Use stick to check path','Sleep on raised surface']}],
+signal:[{icon:'📱',title:'PHONE SIGNAL',steps:['Keep phone charged — power bank','Send SMS instead of calling','Share GPS location via WhatsApp','Save battery — airplane mode']},{icon:'🔊',title:'SOUND SIGNALS',steps:['Blow whistle 3 times = SOS','Bang metal objects rhythmically','Shout in unison with group','Sound carries further at night']}]
+};
+let currentLang='hi-IN',_formatted=null,_adapted=null,_activeTab='whatsapp',countdownSec=6*3600,zoomLevel=1,hiContrast=false;
+// ═══ CURSOR ═══
+const dot=document.getElementById('cursor-dot'),ring=document.getElementById('cursor-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;dot.style.left=mx+'px';dot.style.top=my+'px'});
+(function aR(){rx+=(mx-rx)*.15;ry+=(my-ry)*.15;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(aR)})();
+document.addEventListener('mousedown',()=>document.body.classList.add('clicking'));
+document.addEventListener('mouseup',()=>document.body.classList.remove('clicking'));
+// ═══ RAIN CANVAS ═══
+const rc=document.getElementById('rain-c'),rctx=rc.getContext('2d');
+function rResize(){rc.width=innerWidth;rc.height=innerHeight}rResize();addEventListener('resize',rResize);
+const drops=Array.from({length:250},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,sp:10+Math.random()*8,ln:18+Math.random()*12,op:.4+Math.random()*.2}));
+function drawRain(){rctx.clearRect(0,0,rc.width,rc.height);drops.forEach(d=>{rctx.beginPath();rctx.strokeStyle=`rgba(140,180,255,${d.op})`;rctx.lineWidth=1;rctx.moveTo(d.x,d.y);rctx.lineTo(d.x-.5,d.y+d.ln);rctx.stroke();d.y+=d.sp;d.x-=.5;if(d.y>rc.height-10){rctx.beginPath();rctx.strokeStyle='rgba(140,180,255,0.3)';rctx.lineWidth=.8;rctx.moveTo(d.x-4,rc.height-5);rctx.lineTo(d.x+4,rc.height-5);rctx.stroke();d.y=-d.ln;d.x=Math.random()*rc.width}if(Math.random()<.003){rctx.beginPath();rctx.strokeStyle='rgba(200,230,255,0.8)';rctx.lineWidth=1.5;rctx.moveTo(d.x,d.y);rctx.lineTo(d.x-.5,d.y+60);rctx.stroke()}});requestAnimationFrame(drawRain)}drawRain();
+// ═══ PARTICLE CANVAS ═══
+const pc=document.getElementById('particle-c'),pctx=pc.getContext('2d');
+function pResize(){pc.width=innerWidth;pc.height=innerHeight}pResize();addEventListener('resize',pResize);
+const embers=Array.from({length:60},()=>({x:Math.random()*innerWidth,y:innerHeight+Math.random()*100,sp:.3+Math.random()*.5,sz:1+Math.random()*2,op:.15+Math.random()*.25,off:Math.random()*100}));
+let pf=0;function drawParticles(){pctx.clearRect(0,0,pc.width,pc.height);pf++;embers.forEach(e=>{e.y-=e.sp;e.x+=Math.sin(pf*.01+e.off)*.5;const o=e.op*(0.5+0.5*Math.sin(pf*.02+e.off));pctx.beginPath();pctx.arc(e.x,e.y,e.sz,0,Math.PI*2);pctx.fillStyle=`rgba(255,120,0,${o})`;pctx.fill();if(e.y<-10){e.y=pc.height+10;e.x=Math.random()*pc.width}});requestAnimationFrame(drawParticles)}drawParticles();
+// ═══ LIGHTNING ═══
+function triggerLightning(){const ov=document.createElement('div');ov.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(180,210,255,0.07);z-index:10;pointer-events:none';document.body.appendChild(ov);const sx=Math.random()*innerWidth;rctx.save();rctx.strokeStyle='rgba(200,230,255,0.9)';rctx.lineWidth=1.5;rctx.shadowBlur=15;rctx.shadowColor='rgba(150,200,255,1)';rctx.beginPath();rctx.moveTo(sx,0);let x=sx,y=0;while(y<innerHeight*.6){x+=(Math.random()-.5)*40;y+=Math.random()*30+10;rctx.lineTo(x,y)}rctx.stroke();rctx.restore();setTimeout(()=>{ov.remove();document.body.style.background='rgba(180,200,255,0.03)';setTimeout(()=>document.body.style.background='',60)},80);setTimeout(triggerLightning,6000+Math.random()*12000)}setTimeout(triggerLightning,2000);
+// ═══ MARQUEE ═══
+const mqItems=['⚠️ CYCLONE WARNING: Red Alert — Odisha coast','🌊 FLOOD ALERT: Ganga above danger level — Bihar','⛈️ IMD BULLETIN: Severe storm — Tamil Nadu coast','🔔 NDMA ADVISORY: Evacuate low-lying areas','🆘 NDRF deployed — Dial 1078 for rescue','⚠️ LANDSLIDE WARNING: Yellow Alert — Uttarakhand','🌡️ HEAT ALERT: Extreme heat — Rajasthan, UP'];
+const mqHTML=mqItems.map(t=>`<span class="mq-item">${t}</span>`).join('');
+document.getElementById('mq-track').innerHTML=mqHTML+mqHTML;
+// ═══ SCROLL EFFECTS ═══
+addEventListener('scroll',()=>{const pct=(scrollY/(document.body.scrollHeight-innerHeight))*100;document.getElementById('scroll-progress').style.width=pct+'%';document.getElementById('navbar').classList.toggle('scrolled',scrollY>50);['translate','survive','sos'].forEach(id=>{const el=document.getElementById(id),lnk=document.querySelector(`[href="#${id}"]`);if(!el||!lnk)return;const a=scrollY+150>=el.offsetTop&&scrollY+150<el.offsetTop+el.offsetHeight;lnk.classList.toggle('active',a)});const hc=document.querySelector('.hero-content'),hp=document.querySelector('.hero-panel');if(hc)hc.style.transform=`translateY(${scrollY*.2}px)`;if(hp)hp.style.transform=`translateY(${scrollY*.1}px)`});
+// ═══ REVEAL OBSERVERS ═══
+const revObs=new IntersectionObserver(e=>e.forEach(x=>{if(x.isIntersecting)x.target.classList.add('revealed')}),{threshold:.15});
+setTimeout(()=>{document.querySelectorAll('.p-danger,.p-safe,.div-arrow,.ec,.s-card').forEach(el=>revObs.observe(el))},100);
+// ═══ COUNT UP ═══
+function countUp(el){const t=parseInt(el.dataset.target),s=el.dataset.suffix||'',d=2000,t0=performance.now();(function u(now){const p=Math.min((now-t0)/d,1),e=1-Math.pow(1-p,3);el.textContent=Math.round(e*t)+s;if(p<1)requestAnimationFrame(u)})(t0)}
+const sObs=new IntersectionObserver(e=>e.forEach(x=>{if(x.isIntersecting){x.target.querySelectorAll('.stat-n').forEach(countUp);sObs.unobserve(x.target)}}),{threshold:.5});
+sObs.observe(document.getElementById('hero-stats'));
+// ═══ COUNTDOWN ═══
+setInterval(()=>{countdownSec=countdownSec<=0?6*3600:countdownSec-1;const h=Math.floor(countdownSec/3600).toString().padStart(2,'0'),m=Math.floor((countdownSec%3600)/60).toString().padStart(2,'0'),s=(countdownSec%60).toString().padStart(2,'0');document.getElementById('imp-timer').textContent=h+':'+m+':'+s},1000);
+// ═══ HOVER EFFECTS ═══
+setTimeout(()=>{document.querySelectorAll('a,button,select,.clickable').forEach(el=>{el.addEventListener('mouseenter',()=>document.body.classList.add('hovering'));el.addEventListener('mouseleave',()=>document.body.classList.remove('hovering'))});document.querySelectorAll('button,a').forEach(el=>el.addEventListener('click',function(e){const r=this.getBoundingClientRect(),sz=Math.max(r.width,r.height),rp=document.createElement('span');rp.style.cssText=`position:absolute;width:${sz}px;height:${sz}px;left:${e.clientX-r.left-sz/2}px;top:${e.clientY-r.top-sz/2}px;border-radius:50%;background:rgba(255,255,255,0.15);transform:scale(0);animation:ripple-expand .6s ease forwards;pointer-events:none`;this.style.position='relative';this.style.overflow='hidden';this.appendChild(rp);setTimeout(()=>rp.remove(),600)}));document.querySelectorAll('.magnetic').forEach(btn=>{btn.addEventListener('mousemove',e=>{const r=btn.getBoundingClientRect(),x=e.clientX-r.left-r.width/2,y=e.clientY-r.top-r.height/2;btn.style.transform=`translate(${x*.15}px,${y*.15}px) translateY(-3px)`});btn.addEventListener('mouseleave',()=>btn.style.transform='')})},200);
+// ═══ LOCATION ═══
+function initLocation(){if(!navigator.geolocation)return;navigator.geolocation.getCurrentPosition(async p=>{try{const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${p.coords.latitude}&lon=${p.coords.longitude}&format=json`,{headers:{'Accept-Language':'en'}});const d=await r.json();const st=d.address?.state||'';const m=Object.entries(STATE_MAP).find(([k])=>st.toLowerCase().includes(k.toLowerCase()));const prof=m?m[1]:{community:'bihar_flood',langCode:'hi-IN',greeting:'नमस्ते',display:'India • Hindi'};document.getElementById('comm-sel').value=prof.community;if(document.getElementById('nav-lang-sel'))document.getElementById('nav-lang-sel').value=prof.community;currentLang=prof.langCode;document.getElementById('nav-loc').innerHTML=`<div class="loc-badge">📍 ${prof.display}</div>`;document.getElementById('toast-body').textContent='Switching to '+prof.display.split('•')[1];document.getElementById('toast-greet').textContent=prof.greeting+' 🙏';const t=document.getElementById('loc-toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),5000);fetchWeather(p.coords.latitude,p.coords.longitude)}catch(e){}},()=>{},{timeout:8000,maximumAge:300000})}
+async function fetchWeather(lat,lon){try{const r=await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OWM_KEY}&units=metric`);const d=await r.json();const w=d.weather[0],tp=d.main.temp,ws=d.wind.speed,city=d.name;let sev='green',lb='NORMAL';if(ws>17){sev='red';lb='WIND ALERT'}else if(d.main.humidity>90){sev='orange';lb='RAIN RISK'}else if(tp>40){sev='orange';lb='HEAT ALERT'}const pb=document.getElementById('panel-body');const el=document.createElement('div');el.className='ti';el.style.position='relative';el.innerHTML=`<div class="ti-icon rn">🌤️</div><div class="ti-name">YOUR LOCATION: ${city.toUpperCase()}</div><div class="ti-loc">${w.main} • ${Math.round(tp)}°C • Wind ${Math.round(ws*3.6)}km/h</div><span class="ti-badge ${sev}">${lb}</span><div class="ti-bar"><div class="ti-bar-fill" style="width:${Math.min(ws*3,100)}%;background:${sev==='red'?'var(--danger)':'var(--amber)'}"></div></div><span style="font:700 8px var(--font-o);letter-spacing:2px;color:var(--safe);position:absolute;top:14px;right:0">● LIVE</span>`;pb.appendChild(el)}catch(e){}}
+initLocation();
+// ═══ SURVIVAL TAB RENDER ═══
+async function showSurvTab(cat,btn){
+  document.querySelectorAll('.surv-tab').forEach(t=>t.classList.remove('active'));if(btn){btn.classList.add('active');btn.setAttribute('data-cat',cat);}
+  const grid=document.getElementById('surv-content');
+  if(currentLang.startsWith('en')) { renderSurvCards(cat, SURV_DATA[cat]||[], true); return; }
+  if(window._sCache && window._sCache[currentLang] && window._sCache[currentLang][cat]){ renderSurvCards(cat, window._sCache[currentLang][cat], false); return; }
+  const lc=currentLang.split('-')[0].toUpperCase();
+  grid.innerHTML=`<div class="sg-load" style="text-align:center;padding:40px;width:100%;grid-column:1/-1;display:flex;flex-direction:column;align-items:center;gap:16px"><div class="t-spin" style="display:block;border-top-color:var(--amber);width:30px;height:30px"></div><div style="color:var(--amber);font:600 12px var(--font-o);letter-spacing:2px">AI TRANSLATING GUIDE TO ${lc}...</div></div>`;
+  try {
+     const engData=SURV_DATA[cat]||[];
+     const pmt=`Translate this JSON of survival guides to ISO language '${currentLang}'. Keep exact JSON array structure. Return ONLY JSON: `+JSON.stringify(engData.map(d=>({title:d.title,steps:d.steps})));
+     const res=await groq(pmt,"JSON array only.",0.1,800);
+     const tr=JSON.parse(res.replace(/```json|```/g,'').trim());
+     const fData=engData.map((d,i)=>({ ...d, title:tr[i].title, steps:tr[i].steps }));
+     if(!window._sCache)window._sCache={};if(!window._sCache[currentLang])window._sCache[currentLang]={};
+     window._sCache[currentLang][cat]=fData; renderSurvCards(cat, fData, false);
+  } catch(e) { console.error(e); renderSurvCards(cat, SURV_DATA[cat]||[], true); }
+}
+function renderSurvCards(cat, data, isOff){
+  const grid=document.getElementById('surv-content');
+  grid.innerHTML=data.map((c,i)=>{
+    const stHtml=c.steps.map((s,j)=>`<li><span class="sn">${j+1}</span><span>${s}</span></li>`).join('');
+    const svgHtml=c.svg?`<div class="sc-svg">${c.svg}</div>`:'';
+    return`<div class="s-card tilt-card" style="animation-delay:${i*.08}s"><div class="sc-head"><div class="sc-icon">${c.icon||'⚕️'}</div><div><div class="sc-title">${c.title}</div><span class="offline-pill" style="${!isOff?'color:var(--amber);border-color:var(--amber);background:var(--amber-dim)':''}">${isOff?'🟢 OFFLINE':'🌐 AI TRANSLATED'}</span></div></div>${svgHtml}<ol class="sc-steps">${stHtml}</ol><div class="sc-actions"><button class="sunao-btn clickable" onclick="speakSteps(this)">🔊 SUNAO / LISTEN</button>${c.svg?`<button class="replay-btn clickable" onclick="const s=this.closest('.s-card').querySelector('svg');if(s)s.setCurrentTime(0)">🔄 REPLAY</button>`:''}</div></div>`;
+  }).join('');
+  setTimeout(()=>{document.querySelectorAll('.s-card').forEach(el=>revObs.observe(el));initTilt()},50);
+}
+showSurvTab('first_aid',document.querySelector('.surv-tab'));
+function speakSteps(btn){
+  if(!window.speechSynthesis)return; window.speechSynthesis.cancel();
+  const card=btn.closest('.s-card');
+  const steps=Array.from(card.querySelectorAll('.sc-steps li span:last-child')).map(el=>el.textContent);
+  if(!steps.length)return;
+  const u=new SpeechSynthesisUtterance(steps.join('. '));
+  u.lang=currentLang; u.rate=0.85; window.speechSynthesis.speak(u);
+}
+// ═══ 3D TILT ═══
+function initTilt(){document.querySelectorAll('.tilt-card').forEach(card=>{card.addEventListener('mousemove',e=>{const r=card.getBoundingClientRect(),x=(e.clientY-r.top)/r.height-.5,y=(e.clientX-r.left)/r.width-.5;card.style.transform=`rotateX(${-x*8}deg) rotateY(${y*8}deg) translateZ(8px) translateY(-4px)`});card.addEventListener('mouseleave',()=>card.style.transform='')})}
+// ═══ MOBILE ═══
+function closeMob(){document.getElementById('burger').classList.remove('open');document.getElementById('mob-menu').classList.remove('open')}
+// ═══ GLOBAL LANG SYNC ═══
+function changeGlobalLang(val) {
+   document.getElementById('comm-sel').value=val;
+   if(document.getElementById('nav-lang-sel')) document.getElementById('nav-lang-sel').value=val;
+   currentLang=COMMUNITIES[val].langCode;
+   if(document.getElementById('alert-input').value.trim() && !document.getElementById('trans-btn').disabled) translateAlert();
+   const at=document.querySelector('.surv-tab.active');
+   if(at) showSurvTab(at.getAttribute('data-cat')||'first_aid', at);
+   document.getElementById('toast-body').textContent='Language synced. Refreshing resources...';
+   const t=document.getElementById('loc-toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);
+}
+// ═══ TRANSLATOR ═══
+function toggleBtn(){const b=document.getElementById('trans-btn'),v=document.getElementById('alert-input').value.trim();b.disabled=!v;b.classList.toggle('enabled',!!v)}
+function loadDemo(k){document.getElementById('alert-input').value=DEMOS[k].text;toggleBtn()}
+function setAgState(n,st){const row=document.getElementById('ag'+n),num=document.getElementById('agn'+n),desc=document.getElementById('agd'+n);row.className='ag-row '+st;if(st==='running'){desc.textContent=['Reading alert...','Adapting for community...','Generating formats...'][n-1]}else if(st==='done'){num.textContent='✓';desc.textContent='Complete ✓'}else{num.textContent=n;desc.textContent='Waiting...'}}
+function resetPipeline(){[1,2,3].forEach(n=>setAgState(n,''))}
+async function groq(sys,usr,temp=.3,max=500){const r=await fetch(GROQ_URL,{method:'POST',headers:{'Authorization':'Bearer '+GROQ_KEY,'Content-Type':'application/json'},body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:max,temperature:temp,messages:[{role:'system',content:sys},{role:'user',content:usr}]})});const d=await r.json();return d.choices[0].message.content.trim()}
+async function translateAlert(){const txt=document.getElementById('alert-input').value.trim(),comm=document.getElementById('comm-sel').value;if(!txt)return;const b=document.getElementById('trans-btn'),bs=document.getElementById('btn-spin'),bt=document.getElementById('btn-text');b.disabled=true;bs.style.display='block';bt.textContent='AI PIPELINE RUNNING...';document.getElementById('out-empty').style.display='none';document.getElementById('pipeline').style.display='block';document.getElementById('results').style.display='none';document.getElementById('err-card').style.display='none';setAgState(1,'running');
+try{const ext=JSON.parse((await groq(`Extract key info from this disaster alert. Return ONLY JSON: {"hazard_type":"","severity":"low|medium|high|critical","alert_level":"","affected_areas":[],"time_of_impact":"","recommended_actions":[],"evacuate_immediately":false}`,txt,.1)).replace(/```json|```/g,'').trim());setAgState(1,'done');setAgState(2,'running');
+const c=COMMUNITIES[comm]||COMMUNITIES['bihar_flood'];const adapted=await groq(`Rewrite this alert for: ${c.name} (${c.lang}, ${c.literacy} literacy). Shelter: "${c.shelter}". Rules: Write in ${c.lang}. Class 5 words. Start with ⚠️. Max 60 words. Sound like trusted neighbour.`,JSON.stringify(ext),.4,200);setAgState(2,'done');setAgState(3,'running');
+let fmt;try{const fRaw=await groq(`Create 3 unique formats from the adapted alert EXACTLY as a JSON object with 3 keys ONLY: "whatsapp", "sms", "voice". NO markdown. NO extra text. Example: {"whatsapp":"msg","sms":"msg","voice":"msg"}`,adapted,.1,500);const _st=fRaw.indexOf('{'),_en=fRaw.lastIndexOf('}')+1;fmt=JSON.parse(fRaw.substring(_st,_en))}catch(e){fmt={whatsapp:adapted,sms:adapted.substring(0,160),voice:adapted}}
+setAgState(3,'done');setTimeout(()=>{document.getElementById('pipeline').style.display='none';displayResults(ext,adapted,fmt,txt);document.getElementById('results').scrollIntoView({behavior:'smooth'})},600);
+}catch(e){console.error(e);document.getElementById('err-card').style.display='block';document.getElementById('err-title').textContent='⚠️ '+(e.message.includes('fetch')?'AI Backend Offline':'API Error');document.getElementById('err-msg').textContent=e.message;resetPipeline()}finally{bs.style.display='none';bt.textContent='TRANSLATE ALERT →';b.classList.add('enabled');b.disabled=false}}
+function displayResults(ext,adapted,fmt,orig){const r=document.getElementById('results');r.style.display='flex';_formatted=fmt;_adapted=adapted;const sev=ext.severity||'medium';document.getElementById('sev-orb').className='sev-orb sev-'+sev;document.getElementById('sev-txt').textContent=ext.alert_level||sev.toUpperCase();document.getElementById('sev-level').textContent=(ext.hazard_type||'ALERT').toUpperCase()+' — '+sev.toUpperCase();const sm={low:1,medium:2,high:4,critical:5},f=sm[sev]||3;document.getElementById('sev-dots').innerHTML=Array.from({length:5},(_,i)=>`<span class="sev-dot ${i<f?'f-'+sev:''}"></span>`).join('');document.getElementById('sev-areas').textContent=(ext.affected_areas||[]).join(' • ');document.getElementById('before-txt').textContent=orig;document.getElementById('after-txt').textContent=adapted;const acts=ext.evacuate_immediately?[['🏃','NIKLO'],['👨‍👩‍👧','PARIVAR'],['💊','DAWAI'],['📄','KAAGAZ'],['🏠','SHELTER'],['⏰','ABHI']]:[['⛺','SHELTER'],['💧','PAANI'],['📻','RADIO'],['📱','BATTERY']];document.getElementById('act-strip-r').innerHTML=acts.map(a=>`<div class="ach"><span class="ach-icon">${a[0]}</span><span class="ach-label">${a[1]}</span></div>`).join('');showTab('whatsapp')}
+function showTab(tab){_activeTab=tab;document.getElementById('fmt-content').textContent=(_formatted||{})[tab]||_adapted||'';document.querySelectorAll('.fmt-tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab))}
+function speakResult(){if(!window.speechSynthesis||!_adapted)return;window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(_adapted);u.lang=currentLang;u.rate=.82;window.speechSynthesis.speak(u)}
+function copyResult(){const t=(_formatted||{})[_activeTab]||_adapted||'';navigator.clipboard.writeText(t).then(()=>{const b=document.querySelector('.copy-btn');b.textContent='✓ COPIED';setTimeout(()=>b.textContent='📋 COPY',2000)})}
+// ═══ VOICE ═══
+let recog=null,isListening=false;
+try{const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(SR){recog=new SR();recog.continuous=false;recog.interimResults=false;recog.lang=currentLang;recog.onresult=e=>{const cmd=e.results[0][0].transcript.toLowerCase();handleVoice(cmd);isListening=false;document.getElementById('voice-fab').classList.remove('listening')};recog.onend=()=>{isListening=false;document.getElementById('voice-fab').classList.remove('listening')}}}catch(e){}
+function toggleVoice(){if(!recog){alert("Voice recognition is not supported or was denied by your browser. Please ensure you are using Chrome/Edge and have granted microphone permissions.");return;}if(isListening){recog.stop();return}try{recog.lang=currentLang;isListening=true;document.getElementById('voice-fab').classList.add('listening');recog.start();}catch(e){alert("Microphone failed to start. "+e.message);isListening=false;document.getElementById('voice-fab').classList.remove('listening');}}
+function handleVoice(cmd){if(cmd.includes('translate')||cmd.includes('anuwad'))document.getElementById('translate').scrollIntoView({behavior:'smooth'});else if(cmd.includes('survive')||cmd.includes('bachao'))document.getElementById('survive').scrollIntoView({behavior:'smooth'});else if(cmd.includes('sos')||cmd.includes('madad'))document.getElementById('sos').scrollIntoView({behavior:'smooth'});else if(cmd.includes('cyclone')||cmd.includes('toofan'))loadDemo('cyclone');else if(cmd.includes('flood')||cmd.includes('baarish'))loadDemo('flood');else if(cmd.includes('emergency')||cmd.includes('khatra'))document.getElementById('emg-overlay').classList.add('show')}
+// ═══ ACCESSIBILITY ═══
+function toggleLightMode(){document.documentElement.classList.toggle('light-mode');const b=document.getElementById('light-fab');b.textContent=document.documentElement.classList.contains('light-mode')?'🌙':'☀️'}
+function toggleContrast(){hiContrast=!hiContrast;document.body.style.filter=hiContrast?'contrast(1.4) saturate(1.2)':''}
+function changeTextSize(dir){zoomLevel+=(dir*0.1);if(zoomLevel<0.7)zoomLevel=0.7;if(zoomLevel>1.8)zoomLevel=1.8;document.body.style.zoom=zoomLevel.toFixed(2)}
+</script>
+</body></html>
