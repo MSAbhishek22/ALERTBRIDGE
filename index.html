@@ -280,6 +280,10 @@ body.clicking #cursor-ring{width:20px;height:20px;border-color:var(--danger)}
 @media(max-width:900px){.hero-in{grid-template-columns:1fr}.hero-panel{display:none}.h1-l{font-size:64px}.trans-grid{grid-template-columns:1fr}.prob-grid{grid-template-columns:1fr}.p-danger{border-radius:var(--r-xl);border-right:1px solid var(--border-danger)}.p-safe{border-left:1px solid var(--border-safe);border-radius:var(--r-xl)}.p-div{flex-direction:row;height:60px;width:100%}.div-line{height:1px;width:auto;flex:1}.sos-grid{grid-template-columns:repeat(2,1fr)}.surv-grid{grid-template-columns:1fr}.comp-grid{grid-template-columns:1fr}.nav-links{display:none!important}.nav-burger{display:flex}.footer-in{grid-template-columns:1fr;text-align:center}.res-grid{grid-template-columns:1fr}}
 @media(max-width:480px){.h1-l{font-size:48px!important}.sos-grid{grid-template-columns:1fr}.tab-lbl{display:none}.surv-tab{padding:14px;min-width:58px}.hero-stats{flex-wrap:wrap;gap:16px}.stat-div{display:none}.stat-i{flex:0 0 45%}#fab-cluster{right:12px;bottom:12px}.sec-t,.sos-t{font-size:48px}}
 @media(hover:none){body{cursor:auto}#cursor-dot,#cursor-ring{display:none}}
+.hero3d-wrap{margin-bottom:18px}
+#hero3d{width:100%;height:300px;display:block;border-radius:12px;background:radial-gradient(circle at 50% 40%,rgba(255,120,0,.10),transparent 70%)}
+.hero3d-cap{font:400 11px var(--font-u);color:var(--text-3);letter-spacing:.4px;margin-top:10px;line-height:1.6}
+@media(max-width:900px){.hero-panel{display:block;padding:20px}.hero-panel #panel-body,.hero-panel .pf{display:none}}
 </style>
 </head>
 <body>
@@ -312,6 +316,7 @@ body.clicking #cursor-ring{width:20px;height:20px;border-color:var(--danger)}
 <button class="hero-cta clickable magnetic" onclick="document.getElementById('translate').scrollIntoView({behavior:'smooth'})"><span>TRANSLATE AN ALERT NOW</span><span>→</span><span class="cta-shim"></span></button>
 </div>
 <div class="hero-panel"><div class="ph"><span class="ph-t">ACTIVE THREATS</span><span class="ph-dot"></span></div>
+<div class="hero3d-wrap"><canvas id="hero3d" aria-label="3D disaster-alert radar: stylised India map with pulsing alert beacons and a rotating sweep ring"></canvas><p class="hero3d-cap">RADAR PICTURE — stylised, not live data. Red beacons = red alert, amber = watch. Drag to spin.</p></div>
 <div id="panel-body">
 <div class="ti"><div class="ti-icon cyc">🌀</div><div class="ti-name">CYCLONE DANA</div><div class="ti-loc">Bay of Bengal → Odisha coast</div><span class="ti-badge red">RED ALERT</span><div class="ti-bar"><div class="ti-bar-fill" style="width:85%;background:var(--danger)"></div></div></div>
 <div class="ti"><div class="ti-icon fld">🌊</div><div class="ti-name">GANGA FLOOD</div><div class="ti-loc">Above danger mark — Patna, Bihar</div><span class="ti-badge red">RED ALERT</span><div class="ti-bar"><div class="ti-bar-fill" style="width:78%;background:var(--danger)"></div></div></div>
@@ -577,4 +582,6 @@ function toggleLightMode(){document.documentElement.classList.toggle('light-mode
 function toggleContrast(){hiContrast=!hiContrast;document.body.style.filter=hiContrast?'contrast(1.4) saturate(1.2)':''}
 function changeTextSize(dir){zoomLevel+=(dir*0.1);if(zoomLevel<0.7)zoomLevel=0.7;if(zoomLevel>1.8)zoomLevel=1.8;document.body.style.zoom=zoomLevel.toFixed(2)}
 </script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script src="hero3d.js" defer></script>
 </body></html>
