@@ -353,6 +353,11 @@ body.clicking #cursor-ring{width:20px;height:20px;border-color:var(--danger)}
 <div class="comm-label">⟶ SENDING TO:</div>
 <select id="comm-sel" class="comm-sel" onchange="changeGlobalLang(this.value)"><option value="odisha_coastal">🌊 Coastal Odisha — Odia</option><option value="bihar_flood">🏞️ Bihar & UP — Hindi</option><option value="tamil_coastal">🌴 Tamil Nadu — Tamil</option><option value="kerala_highland">🏔️ Kerala — Malayalam</option><option value="bengal_delta">🌿 Bengal & Assam — Bengali</option><option value="maharashtra_urban">🏙️ Maharashtra — Marathi</option><option value="andhra_coastal">🌊 Andhra & Telangana — Telugu</option><option value="gujarat_kutch">🏜️ Gujarat — Gujarati</option><option value="karnataka_ghats">🏞️ Karnataka — Kannada</option><option value="punjab_plains">🌾 Punjab — Punjabi</option><option value="kashmir_valley">🏔️ Kashmir — Urdu</option></select>
 <button id="trans-btn" class="trans-cta clickable magnetic" onclick="translateAlert()" disabled><span id="btn-text">TRANSLATE ALERT →</span><div class="t-spin" id="btn-spin"></div></button>
+<div id="groq-key-panel" style="display:none;margin-top:14px;padding:14px;border:1px solid var(--border-1);background:var(--surface);text-align:left">
+<div style="font:600 12px var(--font-o);letter-spacing:2px;color:var(--amber);margin-bottom:8px">🔑 GROQ API KEY NEEDED FOR AI FEATURES</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap"><input type="password" id="groq-key-input" placeholder="Paste your Groq API key" autocomplete="off" style="flex:1;min-width:220px;padding:10px;background:var(--bg);border:1px solid var(--border-1);color:var(--text-1);font:400 13px var(--font-u)"><button type="button" class="clickable" onclick="saveGroqKey()" style="padding:10px 18px;background:var(--amber);color:#000;border:none;font:700 12px var(--font-o);letter-spacing:1px;cursor:pointer">SAVE KEY</button></div>
+<div style="font:400 11px var(--font-u);color:var(--text-3);margin-top:8px">Kept only in this browser tab's session — sent only to api.groq.com when you use an AI feature.</div>
+</div>
 <div class="error-card" id="err-card"><div class="err-title" id="err-title">⚠️ Error</div><div class="err-msg" id="err-msg"></div></div>
 </div>
 <div class="trans-output" id="output-panel">
@@ -407,10 +412,33 @@ body.clicking #cursor-ring{width:20px;height:20px;border-color:var(--danger)}
 <script>
 'use strict';
 // ═══ CONFIG ═══
-let GROQ_KEY = localStorage.getItem('ab_groq_key') || 'YOUR_GROQ_API_KEY_HERE';
-if (GROQ_KEY === 'YOUR_GROQ_API_KEY_HERE' || !GROQ_KEY) {
-    const p = prompt('Welcome to AlertBridge! Please enter your Groq API Key to enable AI translations:');
-    if (p) { localStorage.setItem('ab_groq_key', p); GROQ_KEY = p; }
+// No blocking prompt() on load: the key is asked for in-page, at the point of
+// use (see showGroqKeyPanel), and kept only in a JS variable / sessionStorage.
+let GROQ_KEY = '';
+try { GROQ_KEY = sessionStorage.getItem('ab_groq_key') || ''; } catch (e) {}
+function showGroqKeyPanel(){const p=document.getElementById('groq-key-panel');if(p){p.style.display='block';const i=document.getElementById('groq-key-input');if(i)i.focus()}}
+function saveGroqKey(){const i=document.getElementById('groq-key-input');const v=(i?i.value:'').trim();if(!v)return;GROQ_KEY=v;try{sessionStorage.setItem('ab_groq_key',v)}catch(e){}if(i)i.value='';const p=document.getElementById('groq-key-panel');if(p)p.style.display='none'}
+// ═══ LOOP GATING (mirrors hero3d.js) ═══
+// Runs a draw callback only while the tab is visible AND the element is on
+// screen; stops scheduling entirely when gated off; optional fps throttle.
+const PREFERS_REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+function makeLoop(draw, el, fps){
+  let raf=null, visible=true, last=0;
+  const minGap = fps ? 1000/fps : 0;
+  function stop(){ if(raf!==null){ cancelAnimationFrame(raf); raf=null; } }
+  function frame(ts){
+    raf=null;
+    if(document.hidden || !visible) return;
+    if(minGap && ts-last < minGap){ raf=requestAnimationFrame(frame); return; }
+    last=ts; draw(ts);
+    raf=requestAnimationFrame(frame);
+  }
+  function kick(){ if(raf===null && !document.hidden && visible && !PREFERS_REDUCED) raf=requestAnimationFrame(frame); }
+  if(el && 'IntersectionObserver' in window){
+    new IntersectionObserver(en=>{ visible=en[0].isIntersecting; if(visible) kick(); else stop(); },{threshold:0.01}).observe(el);
+  }
+  document.addEventListener('visibilitychange',()=>{ if(document.hidden) stop(); else kick(); });
+  if(PREFERS_REDUCED){ try{ draw(0); }catch(e){} } else { kick(); }
 }
 const GROQ_URL='https://api.groq.com/openai/v1/chat/completions';
 const OWM_KEY='YOUR_OPENWEATHERMAP_KEY_HERE';
@@ -469,19 +497,21 @@ let currentLang='hi-IN',_formatted=null,_adapted=null,_activeTab='whatsapp',coun
 const dot=document.getElementById('cursor-dot'),ring=document.getElementById('cursor-ring');
 let mx=0,my=0,rx=0,ry=0;
 document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;dot.style.left=mx+'px';dot.style.top=my+'px'});
-(function aR(){rx+=(mx-rx)*.15;ry+=(my-ry)*.15;ring.style.left=rx+'px';ring.style.top=ry+'px';requestAnimationFrame(aR)})();
+makeLoop(()=>{rx+=(mx-rx)*.15;ry+=(my-ry)*.15;ring.style.left=rx+'px';ring.style.top=ry+'px'},null,0);
 document.addEventListener('mousedown',()=>document.body.classList.add('clicking'));
 document.addEventListener('mouseup',()=>document.body.classList.remove('clicking'));
 // ═══ RAIN CANVAS ═══
 const rc=document.getElementById('rain-c'),rctx=rc.getContext('2d');
 function rResize(){rc.width=innerWidth;rc.height=innerHeight}rResize();addEventListener('resize',rResize);
 const drops=Array.from({length:250},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,sp:10+Math.random()*8,ln:18+Math.random()*12,op:.4+Math.random()*.2}));
-function drawRain(){rctx.clearRect(0,0,rc.width,rc.height);drops.forEach(d=>{rctx.beginPath();rctx.strokeStyle=`rgba(140,180,255,${d.op})`;rctx.lineWidth=1;rctx.moveTo(d.x,d.y);rctx.lineTo(d.x-.5,d.y+d.ln);rctx.stroke();d.y+=d.sp;d.x-=.5;if(d.y>rc.height-10){rctx.beginPath();rctx.strokeStyle='rgba(140,180,255,0.3)';rctx.lineWidth=.8;rctx.moveTo(d.x-4,rc.height-5);rctx.lineTo(d.x+4,rc.height-5);rctx.stroke();d.y=-d.ln;d.x=Math.random()*rc.width}if(Math.random()<.003){rctx.beginPath();rctx.strokeStyle='rgba(200,230,255,0.8)';rctx.lineWidth=1.5;rctx.moveTo(d.x,d.y);rctx.lineTo(d.x-.5,d.y+60);rctx.stroke()}});requestAnimationFrame(drawRain)}drawRain();
+function drawRain(){rctx.clearRect(0,0,rc.width,rc.height);drops.forEach(d=>{rctx.beginPath();rctx.strokeStyle=`rgba(140,180,255,${d.op})`;rctx.lineWidth=1;rctx.moveTo(d.x,d.y);rctx.lineTo(d.x-.5,d.y+d.ln);rctx.stroke();d.y+=d.sp;d.x-=.5;if(d.y>rc.height-10){rctx.beginPath();rctx.strokeStyle='rgba(140,180,255,0.3)';rctx.lineWidth=.8;rctx.moveTo(d.x-4,rc.height-5);rctx.lineTo(d.x+4,rc.height-5);rctx.stroke();d.y=-d.ln;d.x=Math.random()*rc.width}if(Math.random()<.003){rctx.beginPath();rctx.strokeStyle='rgba(200,230,255,0.8)';rctx.lineWidth=1.5;rctx.moveTo(d.x,d.y);rctx.lineTo(d.x-.5,d.y+60);rctx.stroke()}});}
+makeLoop(drawRain,rc,30);
 // ═══ PARTICLE CANVAS ═══
 const pc=document.getElementById('particle-c'),pctx=pc.getContext('2d');
 function pResize(){pc.width=innerWidth;pc.height=innerHeight}pResize();addEventListener('resize',pResize);
 const embers=Array.from({length:60},()=>({x:Math.random()*innerWidth,y:innerHeight+Math.random()*100,sp:.3+Math.random()*.5,sz:1+Math.random()*2,op:.15+Math.random()*.25,off:Math.random()*100}));
-let pf=0;function drawParticles(){pctx.clearRect(0,0,pc.width,pc.height);pf++;embers.forEach(e=>{e.y-=e.sp;e.x+=Math.sin(pf*.01+e.off)*.5;const o=e.op*(0.5+0.5*Math.sin(pf*.02+e.off));pctx.beginPath();pctx.arc(e.x,e.y,e.sz,0,Math.PI*2);pctx.fillStyle=`rgba(255,120,0,${o})`;pctx.fill();if(e.y<-10){e.y=pc.height+10;e.x=Math.random()*pc.width}});requestAnimationFrame(drawParticles)}drawParticles();
+let pf=0;function drawParticles(){pctx.clearRect(0,0,pc.width,pc.height);pf++;embers.forEach(e=>{e.y-=e.sp;e.x+=Math.sin(pf*.01+e.off)*.5;const o=e.op*(0.5+0.5*Math.sin(pf*.02+e.off));pctx.beginPath();pctx.arc(e.x,e.y,e.sz,0,Math.PI*2);pctx.fillStyle=`rgba(255,120,0,${o})`;pctx.fill();if(e.y<-10){e.y=pc.height+10;e.x=Math.random()*pc.width}});}
+makeLoop(drawParticles,pc,30);
 // ═══ LIGHTNING ═══
 function triggerLightning(){const ov=document.createElement('div');ov.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(180,210,255,0.07);z-index:10;pointer-events:none';document.body.appendChild(ov);const sx=Math.random()*innerWidth;rctx.save();rctx.strokeStyle='rgba(200,230,255,0.9)';rctx.lineWidth=1.5;rctx.shadowBlur=15;rctx.shadowColor='rgba(150,200,255,1)';rctx.beginPath();rctx.moveTo(sx,0);let x=sx,y=0;while(y<innerHeight*.6){x+=(Math.random()-.5)*40;y+=Math.random()*30+10;rctx.lineTo(x,y)}rctx.stroke();rctx.restore();setTimeout(()=>{ov.remove();document.body.style.background='rgba(180,200,255,0.03)';setTimeout(()=>document.body.style.background='',60)},80);setTimeout(triggerLightning,6000+Math.random()*12000)}setTimeout(triggerLightning,2000);
 // ═══ MARQUEE ═══
@@ -511,6 +541,7 @@ async function showSurvTab(cat,btn){
   const grid=document.getElementById('surv-content');
   if(currentLang.startsWith('en')) { renderSurvCards(cat, SURV_DATA[cat]||[], true); return; }
   if(window._sCache && window._sCache[currentLang] && window._sCache[currentLang][cat]){ renderSurvCards(cat, window._sCache[currentLang][cat], false); return; }
+  if(!GROQ_KEY) { renderSurvCards(cat, SURV_DATA[cat]||[], true); return; }
   const lc=currentLang.split('-')[0].toUpperCase();
   grid.innerHTML=`<div class="sg-load" style="text-align:center;padding:40px;width:100%;grid-column:1/-1;display:flex;flex-direction:column;align-items:center;gap:16px"><div class="t-spin" style="display:block;border-top-color:var(--amber);width:30px;height:30px"></div><div style="color:var(--amber);font:600 12px var(--font-o);letter-spacing:2px">AI TRANSLATING GUIDE TO ${lc}...</div></div>`;
   try {
@@ -561,7 +592,7 @@ function toggleBtn(){const b=document.getElementById('trans-btn'),v=document.get
 function loadDemo(k){document.getElementById('alert-input').value=DEMOS[k].text;toggleBtn()}
 function setAgState(n,st){const row=document.getElementById('ag'+n),num=document.getElementById('agn'+n),desc=document.getElementById('agd'+n);row.className='ag-row '+st;if(st==='running'){desc.textContent=['Reading alert...','Adapting for community...','Generating formats...'][n-1]}else if(st==='done'){num.textContent='✓';desc.textContent='Complete ✓'}else{num.textContent=n;desc.textContent='Waiting...'}}
 function resetPipeline(){[1,2,3].forEach(n=>setAgState(n,''))}
-async function groq(sys,usr,temp=.3,max=500){const r=await fetch(GROQ_URL,{method:'POST',headers:{'Authorization':'Bearer '+GROQ_KEY,'Content-Type':'application/json'},body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:max,temperature:temp,messages:[{role:'system',content:sys},{role:'user',content:usr}]})});const d=await r.json();return d.choices[0].message.content.trim()}
+async function groq(sys,usr,temp=.3,max=500){if(!GROQ_KEY){showGroqKeyPanel();throw new Error('Please add your Groq API key in the box above the Translate button to use AI features.')}const r=await fetch(GROQ_URL,{method:'POST',headers:{'Authorization':'Bearer '+GROQ_KEY,'Content-Type':'application/json'},body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:max,temperature:temp,messages:[{role:'system',content:sys},{role:'user',content:usr}]})});const d=await r.json();return d.choices[0].message.content.trim()}
 async function translateAlert(){const txt=document.getElementById('alert-input').value.trim(),comm=document.getElementById('comm-sel').value;if(!txt)return;const b=document.getElementById('trans-btn'),bs=document.getElementById('btn-spin'),bt=document.getElementById('btn-text');b.disabled=true;bs.style.display='block';bt.textContent='AI PIPELINE RUNNING...';document.getElementById('out-empty').style.display='none';document.getElementById('pipeline').style.display='block';document.getElementById('results').style.display='none';document.getElementById('err-card').style.display='none';setAgState(1,'running');
 try{const ext=JSON.parse((await groq(`Extract key info from this disaster alert. Return ONLY JSON: {"hazard_type":"","severity":"low|medium|high|critical","alert_level":"","affected_areas":[],"time_of_impact":"","recommended_actions":[],"evacuate_immediately":false}`,txt,.1)).replace(/```json|```/g,'').trim());setAgState(1,'done');setAgState(2,'running');
 const c=COMMUNITIES[comm]||COMMUNITIES['bihar_flood'];const adapted=await groq(`Rewrite this alert for: ${c.name} (${c.lang}, ${c.literacy} literacy). Shelter: "${c.shelter}". Rules: Write in ${c.lang}. Class 5 words. Start with ⚠️. Max 60 words. Sound like trusted neighbour.`,JSON.stringify(ext),.4,200);setAgState(2,'done');setAgState(3,'running');
